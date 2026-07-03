@@ -1,0 +1,79 @@
+{
+  "client_id": "YOUR_TWITCH_CLIENT_ID",
+  "client_secret": "YOUR_TWITCH_CLIENT_SECRET",
+
+  "channel": "YOUR_TWITCH_CHANNEL_NAME",
+
+  "redirect_uri": "http://localhost:17563",
+
+  "token_file": "tokens/user_token.json",
+
+  "scopes": [
+    "CHAT_READ",
+    "CHAT_EDIT",
+    "USER_READ_CHAT",
+    "USER_BOT"
+  ],
+
+  "game_dictionary": "minecraft",
+
+  "aivis": {
+    "host": "127.0.0.1",
+    "port": 10101
+  },
+
+  "speech": {
+    "max_length": 120,
+    "cooldown": 3.0,
+    "skip_url_only": true,
+    "skip_empty": true
+  },
+
+  "audio": {
+    "backend": "pipewire",
+    "app_name": "AivisVoiceBridge",
+    "media_role": "Communication"
+  },
+
+  "voices": {
+    "default": {
+      "speaker": 888753760,
+      "speed": 1.0,
+      "pitch": 0.0,
+      "volume": 1.0,
+      "enabled": true
+    },
+
+    "broadcaster": {
+      "speaker": 888753760,
+      "speed": 1.0,
+      "pitch": 0.0,
+      "volume": 1.0,
+      "enabled": true
+    },
+
+    "moderator": {
+      "speaker": 888753760,
+      "speed": 1.0,
+      "pitch": 0.0,
+      "volume": 1.0,
+      "enabled": true
+    },
+
+    "vip": {
+      "speaker": 888753760,
+      "speed": 1.0,
+      "pitch": 0.0,
+      "volume": 1.0,
+      "enabled": true
+    },
+
+    "subscriber": {
+      "speaker": 888753760,
+      "speed": 1.0,
+      "pitch": 0.0,
+      "volume": 1.0,
+      "enabled": true
+    }
+  }
+}
