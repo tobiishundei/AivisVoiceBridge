@@ -1,8 +1,16 @@
+"""
+設定に応じて音声出力バックエンドを生成する。
+"""
+
 from audio.ffplay_output import FFplayOutput
 from audio.pipewire_output import PipeWireOutput
 
 
 def create_audio_output(config, logger=None):
+    """
+    config.audio.backend に応じた AudioOutput を生成する。
+    """
+
     audio = config.audio
     backend = audio.backend
 
@@ -14,7 +22,9 @@ def create_audio_output(config, logger=None):
         )
 
     if backend == "ffplay":
-        return FFplayOutput()
+        return FFplayOutput(
+            logger=logger,
+        )
 
     raise RuntimeError(
         f"Unknown audio backend: {backend}"
