@@ -285,19 +285,17 @@ Skip: too_long
 - [x] 辞書読み替え
 - [x] 音声プロファイル
 - [x] 読み上げポリシー
-- [ ] TTSエンジン抽象化
-- [ ] VOICEVOX Engine 対応
-- [ ] README 整備
-- [ ] config.json.example 整備
+- [x] TTSエンジン抽象化
+- [x] VOICEVOX Engine 対応
+- [x] README 整備
+- [x] config.json.example 整備
 
 ## 今後の予定
 
 v1.0 では、Twitch + AivisSpeech / VOICEVOX + PipeWire + OBS の構成に絞って完成を目指します。
 
 YouTube 連携、GUI化、完全 Docker 化は v1.1 以降の検討対象です。
-EOF
 
-cat >> README.md <<'EOF'
 
 ## TTSエンジンの切り替え
 
@@ -355,4 +353,97 @@ curl http://127.0.0.1:50021/speakers
 AivisSpeech Engine と VOICEVOX Engine では、同じ `speaker` 数値でも別の話者を指す場合があります。
 
 TTSバックエンドを切り替える場合は、`voices` の `speaker` も対応するエンジンのIDに変更してください。
-EOF
+
+## 動作確認手順
+
+v1.0 前の基本的な動作確認手順です。
+
+### AivisSpeech Engine で確認する
+
+AivisSpeech Engine を起動した状態で、`settings/config.json` を以下のように設定します。
+
+```json
+"tts": {
+  "backend": "aivis"
+},
+
+"aivis": {
+  "host": "127.0.0.1",
+  "port": 10101
+}
+```
+
+その後、音声テストを実行します。
+
+```bash
+python main.py --audio-test
+```
+
+OBS の `obs-pipewire-audio-capture` 側で `AivisVoiceBridge` が表示され、読み上げ音声だけが反応すれば成功です。
+
+通常起動も確認します。
+
+```bash
+python main.py
+```
+
+Twitch チャンネルでコメントを投稿し、AivisSpeech Engine の音声で読み上げられれば成功です。
+
+### VOICEVOX Engine で確認する
+
+VOICEVOX Engine を起動した状態で、`settings/config.json` を以下のように設定します。
+
+```json
+"tts": {
+  "backend": "voicevox"
+},
+
+"voicevox": {
+  "host": "127.0.0.1",
+  "port": 50021
+}
+```
+
+VOICEVOX の話者 ID は以下で確認できます。
+
+```bash
+curl http://127.0.0.1:50021/speakers
+```
+
+返ってきた JSON の `styles[].id` を、`voices` の `speaker` に設定します。
+
+設定後、音声テストを実行します。
+
+```bash
+python main.py --audio-test
+```
+
+VOICEVOX の音声でテスト音声が再生されれば成功です。
+
+通常起動も確認します。
+
+```bash
+python main.py
+```
+
+Twitch チャンネルでコメントを投稿し、VOICEVOX の音声で読み上げられれば成功です。
+
+### OBS 側の確認
+
+OBS Studio では、`obs-pipewire-audio-capture` のアプリ別音声キャプチャで `AivisVoiceBridge` を選択します。
+
+確認ポイント:
+
+- `python main.py --audio-test` 実行中に `AivisVoiceBridge` がアプリ一覧へ表示される
+- 読み上げ音声にだけ OBS の音声メーターが反応する
+- ブラウザ、ゲーム、デスクトップ音声には反応しない
+- 通常起動後の Twitch コメント読み上げでも同じソースに音声が入る
+
+これらが確認できれば、OBS 個別音声キャプチャの設定は完了です。
+
+
+## 謝辞
+
+OBS Studio での PipeWire アプリ別音声キャプチャには、obs-pipewire-audio-capture プラグインを利用しています。
+
+AivisVoiceBridge の音声を OBS 上で個別ソースとして扱えるのは、このプラグインのおかげです。開発者の方に感謝します。
