@@ -1,10 +1,19 @@
+"""
+AivisSpeech Engine との通信を行うクライアント。
+
+AivisSpeech Engine は VOICEVOX 互換に近い API を持つため、
+/audio_query でクエリを生成し、/synthesis で WAV 音声を生成する。
+"""
+
 import aiohttp
 
 
 class AivisClient:
+    """
+    AivisSpeech Engine の音声合成APIを扱うクライアント。
+    """
 
     def __init__(self, config):
-
         self.base_url = (
             f"http://{config.host}:{config.port}"
         )
@@ -12,17 +21,20 @@ class AivisClient:
         self.session = None
 
     async def start(self):
+        """
+        HTTPセッションを開始する。
+        """
 
         if self.session is None:
-
             self.session = aiohttp.ClientSession()
 
     async def stop(self):
+        """
+        HTTPセッションを終了する。
+        """
 
         if self.session is not None:
-
             await self.session.close()
-
             self.session = None
 
     async def synthesize(
@@ -30,10 +42,46 @@ class AivisClient:
         text: str,
         profile,
     ) -> bytes:
+        """
+        テキストと VoiceProfile から WAV 音声を生成する。
+        """
 
-        #
-        # AudioQuery生成
-        #
+        self._ensure_started()
+
+        query = await self._create_audio_query(
+            text,
+            profile,
+        )
+
+        self._apply_voice_profile(
+            query,
+            profile,
+        )
+
+        return await self._synthesize_wav(
+            query,
+            profile,
+        )
+
+    def _ensure_started(self):
+        """
+        start() が呼ばれていることを確認する。
+        """
+
+        if self.session is None:
+            raise RuntimeError(
+                "AivisClient is not started"
+            )
+
+    async def _create_audio_query(
+        self,
+        text: str,
+        profile,
+    ) -> dict:
+        """
+        /audio_query を呼び出して音声合成用クエリを生成する。
+        """
+
         async with self.session.post(
             f"{self.base_url}/audio_query",
             params={
@@ -41,19 +89,32 @@ class AivisClient:
                 "speaker": profile.speaker,
             },
         ) as response:
+            response.raise_for_status()
 
-            query = await response.json()
+            return await response.json()
 
-        #
-        # パラメータ変更
-        #
+    def _apply_voice_profile(
+        self,
+        query: dict,
+        profile,
+    ):
+        """
+        VoiceProfile の音声パラメータを audio_query に反映する。
+        """
+
         query["speedScale"] = profile.speed
         query["pitchScale"] = profile.pitch
         query["volumeScale"] = profile.volume
 
-        #
-        # 音声合成
-        #
+    async def _synthesize_wav(
+        self,
+        query: dict,
+        profile,
+    ) -> bytes:
+        """
+        /synthesis を呼び出して WAV 音声を生成する。
+        """
+
         async with self.session.post(
             f"{self.base_url}/synthesis",
             params={
@@ -61,7 +122,6 @@ class AivisClient:
             },
             json=query,
         ) as response:
+            response.raise_for_status()
 
-            wav = await response.read()
-
-        return wav
+            return await response.read()
