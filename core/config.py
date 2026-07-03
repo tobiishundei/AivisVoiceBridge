@@ -1,20 +1,38 @@
+"""
+AivisVoiceBridge の設定読み込みを行う。
+
+settings/config.json を読み込み、アプリ全体で使う Config オブジェクトへ変換する。
+秘密情報を含む config.json は Git 管理しない。
+"""
+
+import json
 from dataclasses import dataclass
 from pathlib import Path
-import json
+
+from twitchAPI.type import AuthScope
 
 from models.voice_profile import VoiceProfile
 
-from twitchAPI.type import AuthScope
+
+CONFIG_PATH = Path("settings") / "config.json"
 
 
 @dataclass
 class AivisConfig:
+    """
+    AivisSpeech Engine への接続設定。
+    """
+
     host: str
     port: int
 
 
 @dataclass
 class SpeechConfig:
+    """
+    読み上げ可否を判定するための設定。
+    """
+
     max_length: int
     cooldown: float
     skip_url_only: bool
@@ -23,6 +41,10 @@ class SpeechConfig:
 
 @dataclass
 class AudioConfig:
+    """
+    音声出力バックエンドの設定。
+    """
+
     backend: str
     app_name: str
     media_role: str
@@ -30,6 +52,10 @@ class AudioConfig:
 
 @dataclass
 class Config:
+    """
+    アプリケーション全体の設定。
+    """
+
     client_id: str
     client_secret: str
     channel: str
@@ -54,88 +80,135 @@ _SCOPE_MAP = {
 }
 
 
-def _load_voice_profiles(data):
-
-    profiles = {}
-
-    for name, profile in data["voices"].items():
-
-        profiles[name] = VoiceProfile(
-
-            name=name,
-
-            speaker=profile["speaker"],
-
-            speed=profile["speed"],
-
-            pitch=profile["pitch"],
-
-            volume=profile["volume"],
-        )
-
-    return profiles
-
-
 def load_config() -> Config:
+    """
+    config.json を読み込み、Config オブジェクトを返す。
+    """
 
-    config_path = Path("settings") / "config.json"
+    data = _load_json(CONFIG_PATH)
 
-    with open(config_path, "r", encoding="utf-8") as f:
-        data = json.load(f)
-
-    #
-    # Aivis設定
-    #
-    aivis = AivisConfig(
-        host=data["aivis"]["host"],
-        port=data["aivis"]["port"],
-    )
-
-    #
-    # Speech設定
-    #
-    speech = SpeechConfig(
-        max_length=data["speech"]["max_length"],
-        cooldown=data["speech"]["cooldown"],
-        skip_url_only=data["speech"]["skip_url_only"],
-        skip_empty=data["speech"]["skip_empty"],
-    )
-
-    #
-    # Audio設定
-    #
-    audio_data = data["audio"]
-
-    audio = AudioConfig(
-        backend=audio_data.get(
-            "backend",
-            "pipewire",
-        ),
-        app_name=audio_data.get(
-            "app_name",
-            "AivisVoiceBridge",
-        ),
-        media_role=audio_data.get(
-            "media_role",
-            "Communication",
-        ),
-    )
-
-    #
-    # Config生成
-    #
     return Config(
         client_id=data["client_id"],
         client_secret=data["client_secret"],
         channel=data["channel"],
         redirect_uri=data["redirect_uri"],
         token_file=data["token_file"],
-        scopes=[_SCOPE_MAP[s] for s in data["scopes"]],
-
+        scopes=_load_scopes(data),
         game_dictionary=data["game_dictionary"],
-
-        aivis=aivis,
-        speech=speech,
-        audio=audio,
+        aivis=_load_aivis_config(data),
+        speech=_load_speech_config(data),
+        audio=_load_audio_config(data),
         voice_profiles=_load_voice_profiles(data),
     )
+
+
+def _load_json(path: Path) -> dict:
+    """
+    JSONファイルを読み込む。
+    """
+
+    with open(path, "r", encoding="utf-8") as f:
+        return json.load(f)
+
+
+def _load_scopes(data: dict) -> list[AuthScope]:
+    """
+    config.json の文字列スコープを AuthScope に変換する。
+    """
+
+    scopes = []
+
+    for scope_name in data["scopes"]:
+        if scope_name not in _SCOPE_MAP:
+            raise ValueError(
+                f"Unknown Twitch scope: {scope_name}"
+            )
+
+        scopes.append(
+            _SCOPE_MAP[scope_name]
+        )
+
+    return scopes
+
+
+def _load_aivis_config(data: dict) -> AivisConfig:
+    """
+    AivisSpeech Engine の接続設定を読み込む。
+    """
+
+    aivis = data["aivis"]
+
+    return AivisConfig(
+        host=aivis["host"],
+        port=aivis["port"],
+    )
+
+
+def _load_speech_config(data: dict) -> SpeechConfig:
+    """
+    読み上げポリシー設定を読み込む。
+    """
+
+    speech = data["speech"]
+
+    return SpeechConfig(
+        max_length=speech["max_length"],
+        cooldown=speech["cooldown"],
+        skip_url_only=speech["skip_url_only"],
+        skip_empty=speech["skip_empty"],
+    )
+
+
+def _load_audio_config(data: dict) -> AudioConfig:
+    """
+    音声出力設定を読み込む。
+    """
+
+    audio = data["audio"]
+
+    return AudioConfig(
+        backend=audio.get(
+            "backend",
+            "pipewire",
+        ),
+        app_name=audio.get(
+            "app_name",
+            "AivisVoiceBridge",
+        ),
+        media_role=audio.get(
+            "media_role",
+            "Communication",
+        ),
+    )
+
+
+def _load_voice_profiles(data: dict) -> dict[str, VoiceProfile]:
+    """
+    読み上げ用の音声プロファイルを読み込む。
+    """
+
+    profiles = {}
+
+    for name, profile in data["voices"].items():
+        profiles[name] = VoiceProfile(
+            name=name,
+            speaker=profile["speaker"],
+            speed=profile.get(
+                "speed",
+                1.0,
+            ),
+            pitch=profile.get(
+                "pitch",
+                0.0,
+            ),
+            volume=profile.get(
+                "volume",
+                1.0,
+            ),
+            enabled=profile.get(
+                "enabled",
+                True,
+            ),
+        )
+
+    return profiles
