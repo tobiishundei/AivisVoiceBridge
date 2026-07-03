@@ -5,10 +5,10 @@ AivisVoiceBridge の PipeWire 音声ノードを OBS 側で選択しやすくす
 通常のコメント読み上げより長めのテスト音声を再生する。
 """
 
-from core.logger import setup_logger
 from audio.audio_engine import AudioEngine
 from audio.factory import create_audio_output
-from speech.aivis_client import AivisClient
+from core.logger import setup_logger
+from tts.factory import create_tts_engine
 
 
 AUDIO_TEST_TEXT = (
@@ -24,7 +24,7 @@ async def run_audio_test(config):
     """
     音声出力テストを実行する。
 
-    Twitchには接続せず、音声合成エンジンと音声出力のみを使う。
+    Twitchには接続せず、TTSエンジンと音声出力のみを使う。
     """
 
     logger = setup_logger()
@@ -33,7 +33,9 @@ async def run_audio_test(config):
         "AivisVoiceBridge audio test started"
     )
 
-    aivis = AivisClient(config.aivis)
+    tts = create_tts_engine(
+        config
+    )
 
     output = create_audio_output(
         config,
@@ -45,10 +47,10 @@ async def run_audio_test(config):
     profile = config.voice_profiles["default"]
 
     try:
-        await aivis.start()
+        await tts.start()
         await audio.start()
 
-        wav = await aivis.synthesize(
+        wav = await tts.synthesize(
             AUDIO_TEST_TEXT,
             profile,
         )
@@ -57,7 +59,7 @@ async def run_audio_test(config):
 
     finally:
         await audio.stop()
-        await aivis.stop()
+        await tts.stop()
 
     logger.info(
         "AivisVoiceBridge audio test finished"

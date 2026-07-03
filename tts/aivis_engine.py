@@ -1,5 +1,5 @@
 """
-AivisSpeech Engine との通信を行うクライアント。
+AivisSpeech Engine 用の TTS エンジン。
 
 AivisSpeech Engine は VOICEVOX 互換に近い API を持つため、
 /audio_query でクエリを生成し、/synthesis で WAV 音声を生成する。
@@ -7,10 +7,12 @@ AivisSpeech Engine は VOICEVOX 互換に近い API を持つため、
 
 import aiohttp
 
+from tts.tts_engine import TtsEngine
 
-class AivisClient:
+
+class AivisEngine(TtsEngine):
     """
-    AivisSpeech Engine の音声合成APIを扱うクライアント。
+    AivisSpeech Engine の音声合成APIを扱う TTS エンジン。
     """
 
     def __init__(self, config):
@@ -70,7 +72,7 @@ class AivisClient:
 
         if self.session is None:
             raise RuntimeError(
-                "AivisClient is not started"
+                "AivisEngine is not started"
             )
 
     async def _create_audio_query(

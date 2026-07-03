@@ -7,8 +7,6 @@ VoiceProfile を選択して TTS 音声を生成し、AudioEngine へ渡す。
 
 import asyncio
 
-from speech.aivis_client import AivisClient
-
 
 class SpeechWorker:
     """
@@ -20,22 +18,21 @@ class SpeechWorker:
         queue,
         logger,
         voice_profiles,
-        config,
+        tts,
         audio,
     ):
         self.queue = queue
         self.logger = logger
         self.voice_profiles = voice_profiles
+        self.tts = tts
         self.audio = audio
-
-        self.aivis = AivisClient(config)
 
         self._task = None
         self._running = False
 
     async def start(self):
         """
-        TTSクライアントと音声出力を開始し、読み上げワーカーを起動する。
+        TTSエンジンと音声出力を開始し、読み上げワーカーを起動する。
         """
 
         if self._running:
@@ -43,7 +40,7 @@ class SpeechWorker:
 
         self._running = True
 
-        await self.aivis.start()
+        await self.tts.start()
         await self.audio.start()
 
         self._task = asyncio.create_task(
@@ -56,7 +53,7 @@ class SpeechWorker:
 
     async def stop(self):
         """
-        読み上げワーカーを停止し、TTSクライアントと音声出力を終了する。
+        読み上げワーカーを停止し、TTSエンジンと音声出力を終了する。
         """
 
         self._running = False
@@ -73,7 +70,7 @@ class SpeechWorker:
             self._task = None
 
         await self.audio.stop()
-        await self.aivis.stop()
+        await self.tts.stop()
 
     async def _run(self):
         """
@@ -115,7 +112,7 @@ class SpeechWorker:
             f"VoiceProfile: {profile.name}"
         )
 
-        wav = await self.aivis.synthesize(
+        wav = await self.tts.synthesize(
             message.text,
             profile,
         )
