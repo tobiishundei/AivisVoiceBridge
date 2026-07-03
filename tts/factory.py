@@ -5,6 +5,7 @@ AivisSpeech Engine、VOICEVOX Engine などの切り替えをここで行う。
 """
 
 from tts.aivis_engine import AivisEngine
+from tts.voicevox_engine import VoicevoxEngine
 
 
 def create_tts_engine(config):
@@ -17,6 +18,11 @@ def create_tts_engine(config):
     if backend == "aivis":
         return AivisEngine(
             config.aivis
+        )
+
+    if backend == "voicevox":
+        return VoicevoxEngine(
+            config.voicevox
         )
 
     raise RuntimeError(

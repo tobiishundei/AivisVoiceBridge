@@ -26,6 +26,14 @@ class AivisConfig:
     host: str
     port: int
 
+@dataclass
+class VoicevoxConfig:
+    """
+    VOICEVOX Engine への接続設定。
+    """
+
+    host: str
+    port: int
 
 @dataclass
 class SpeechConfig:
@@ -74,6 +82,7 @@ class Config:
 
     tts: TtsConfig
     aivis: AivisConfig
+    voicevox: VoicevoxConfig
     speech: SpeechConfig
     audio: AudioConfig
     voice_profiles: dict[str, VoiceProfile]
@@ -105,6 +114,7 @@ def load_config() -> Config:
         game_dictionary=data["game_dictionary"],
         tts=_load_tts_config(data),
         aivis=_load_aivis_config(data),
+        voicevox=_load_voicevox_config(data),
         speech=_load_speech_config(data),
         audio=_load_audio_config(data),
         voice_profiles=_load_voice_profiles(data),
@@ -168,6 +178,26 @@ def _load_aivis_config(data: dict) -> AivisConfig:
         port=aivis["port"],
     )
 
+def _load_voicevox_config(data: dict) -> VoicevoxConfig:
+    """
+    VOICEVOX Engine の接続設定を読み込む。
+    """
+
+    voicevox = data.get(
+        "voicevox",
+        {},
+    )
+
+    return VoicevoxConfig(
+        host=voicevox.get(
+            "host",
+            "127.0.0.1",
+        ),
+        port=voicevox.get(
+            "port",
+            50021,
+        ),
+    )
 
 def _load_speech_config(data: dict) -> SpeechConfig:
     """

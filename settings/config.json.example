@@ -26,6 +26,11 @@
     "port": 10101
   },
 
+  "voicevox": {
+    "host": "127.0.0.1",
+    "port": 50021
+  },
+
   "speech": {
     "max_length": 120,
     "cooldown": 3.0,
