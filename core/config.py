@@ -49,6 +49,13 @@ class AudioConfig:
     app_name: str
     media_role: str
 
+@dataclass
+class TtsConfig:
+    """
+    使用する TTS エンジンの設定。
+    """
+
+    backend: str
 
 @dataclass
 class Config:
@@ -65,6 +72,7 @@ class Config:
 
     game_dictionary: str
 
+    tts: TtsConfig
     aivis: AivisConfig
     speech: SpeechConfig
     audio: AudioConfig
@@ -95,6 +103,7 @@ def load_config() -> Config:
         token_file=data["token_file"],
         scopes=_load_scopes(data),
         game_dictionary=data["game_dictionary"],
+        tts=_load_tts_config(data),
         aivis=_load_aivis_config(data),
         speech=_load_speech_config(data),
         audio=_load_audio_config(data),
@@ -130,6 +139,22 @@ def _load_scopes(data: dict) -> list[AuthScope]:
 
     return scopes
 
+def _load_tts_config(data: dict) -> TtsConfig:
+    """
+    TTSエンジン設定を読み込む。
+    """
+
+    tts = data.get(
+        "tts",
+        {}
+    )
+
+    return TtsConfig(
+        backend=tts.get(
+            "backend",
+            "aivis",
+        ),
+    )
 
 def _load_aivis_config(data: dict) -> AivisConfig:
     """

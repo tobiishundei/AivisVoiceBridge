@@ -17,6 +17,10 @@
 
   "game_dictionary": "minecraft",
 
+  "tts": {
+    "backend": "aivis"
+  },
+
   "aivis": {
     "host": "127.0.0.1",
     "port": 10101
