@@ -1,4 +1,3 @@
-cat > README.md <<'EOF'
 # AivisVoiceBridge
 
 AivisVoiceBridge は、Twitch のチャットコメントを AivisSpeech Engine で読み上げ、Linux / PipeWire 環境で OBS Studio に個別音声ソースとして渡すための読み上げアプリです。
