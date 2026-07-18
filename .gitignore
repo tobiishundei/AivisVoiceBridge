@@ -16,6 +16,8 @@ logs/
 
 # Local settings / secrets
 settings/config.json
+settings/config.json.backup
+settings/config.json.tmp
 tokens/
 
 # OS / editor
