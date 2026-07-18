@@ -15,8 +15,12 @@ from twitchAPI.twitch import Twitch
 from core.config import Config
 from twitch.handlers.chat_handler import ChatHandler
 
+import json
+from datetime import datetime, timezone
+
 
 TOKEN_DIR = Path("tokens")
+AUTH_STATUS_PATH = TOKEN_DIR / "auth_status.json"
 
 
 class TwitchClient:
@@ -155,3 +159,76 @@ class TwitchClient:
         self.logger.info(
             f"Chat subscription registered ({subscription_id})"
         )
+
+    def _save_auth_status(self):
+        """
+        認証済みTwitchユーザーの公開情報を保存する。
+
+        アクセストークンや更新トークンなどの
+        秘密情報は保存しない。
+        """
+        if self.user is None:
+            return
+
+        TOKEN_DIR.mkdir(
+            parents=True,
+            exist_ok=True,
+        )
+
+        status = {
+            "authenticated": True,
+            "user_id": str(self.user.id),
+            "login": str(self.user.login),
+            "display_name": str(
+                self.user.display_name
+            ),
+            "checked_at": datetime.now(
+                timezone.utc
+            ).isoformat(),
+        }
+
+        temporary_path = (
+            AUTH_STATUS_PATH.with_suffix(
+                ".json.tmp"
+            )
+        )
+
+        with temporary_path.open(
+            "w",
+            encoding="utf-8",
+        ) as file:
+            json.dump(
+                status,
+                file,
+                ensure_ascii=False,
+                indent=2,
+            )
+
+            file.write("\n")
+
+        temporary_path.replace(
+            AUTH_STATUS_PATH
+        )
+
+    async def _load_current_user(self):
+        """
+        認証済みユーザー情報を取得する。
+        """
+
+        self.user = await first(
+            self.twitch.get_users()
+        )
+
+        self.logger.info(
+            "Connected!"
+        )
+
+        self.logger.info(
+            f"Logged in as : {self.user.display_name}"
+        )
+
+        self.logger.info(
+            f"User ID      : {self.user.id}"
+        )
+
+        self._save_auth_status()        

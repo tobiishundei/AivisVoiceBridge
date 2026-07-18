@@ -1,198 +1,229 @@
 # AivisVoiceBridge
 
-AivisVoiceBridge は、Twitch のチャットコメントを AivisSpeech Engine で読み上げ、Linux / PipeWire 環境で OBS Studio に個別音声ソースとして渡すための読み上げアプリです。
+AivisVoiceBridge は、Twitch のチャットコメントを AivisSpeech Engine または VOICEVOX Engine で読み上げるアプリです。
+
+Linux / PipeWire 環境では、読み上げ音声を OBS Studio に個別の音声ソースとして渡せます。
+
+Web UIから音声エンジン、話者、読み上げ、Twitch、辞書などの設定を管理できます。
+
+## 現在のバージョン
+
+```text
+v1.1.0
+```
 
 ## 主な機能
 
-- Twitch チャットコメントの受信
-- AivisSpeech Engine による音声合成
-- PipeWire / `pw-play` による音声出力
-- OBS Studio で読み上げ音声だけを個別キャプチャ
-- 配信者、モデレーター、VIP、サブスクライバー別の音声プロファイル
-- 辞書による読み替え
-- URL、省略表現、笑い、拍手、句読点の読み上げ向け整形
-- 読み上げスキップ判定
-  - 空メッセージ
-  - URLのみ
-  - 長文
-  - 同一ユーザーの連投 cooldown
+* Twitchチャットコメントの受信
+* AivisSpeech Engineによる音声合成
+* VOICEVOX Engineによる音声合成
+* TTSエンジンの切り替え
+* PipeWire / `pw-play` による音声出力
+* OBS Studioでの読み上げ音声の個別キャプチャ
+* 読み上げキュー
+* 配信者、モデレーター、VIP、サブスクライバー別の音声プロファイル
+* 話速、音高、音量の調整
+* 辞書による読み替え
+* URL、笑い、拍手、句読点などの読み上げ向け整形
+* 読み上げスキップ判定
+
+  * 空メッセージ
+  * URLのみ
+  * 長文
+  * 同一ユーザーの連投クールダウン
+* ローカルWeb設定画面
+
+## Web UI
+
+AivisVoiceBridge v1.1.0では、ブラウザから設定を管理できます。
+
+### Web UIで設定できる項目
+
+* AivisSpeech Engine / VOICEVOX Engineの切り替え
+* 音声エンジンのホストとポート
+* 音声エンジンへの接続確認
+* 話者とスタイルの選択
+* 話速、音高、音量
+* 選択した音声のテスト再生
+* ユーザー種別ごとの音声プロファイル
+
+  * 通常ユーザー
+  * 配信者
+  * モデレーター
+  * VIP
+  * サブスクライバー
+* 最大読み上げ文字数
+* 読み上げ間隔
+* URLだけのコメントを無視
+* 空コメントを無視
+* Twitchチャンネル名
+* Twitch OAuth Redirect URI
+* Twitch認証状態
+* Twitch再認証の準備
+* ゲーム辞書の選択
+* 辞書ファイル数、登録語数、JSONエラーの確認
+
+### Web UIの起動
+
+AivisVoiceBridge本体とは別のターミナルで起動します。
+
+```bash
+python -m webui.app
+```
+
+ブラウザで次を開きます。
+
+```text
+http://127.0.0.1:17564
+```
+
+Web UIは `127.0.0.1` で起動するため、通常は同じPCからだけアクセスできます。
+
+Flaskの開発用サーバーに関する警告が表示されますが、ローカル専用の設定画面として使う場合は問題ありません。
 
 ## 必要環境
 
-- Python 3.14+
-- AivisSpeech Engine
-- PipeWire
-- `pw-play`
-- OBS Studio
-- obs-pipewire-audio-capture プラグイン
+* Python 3.14以上
+* AivisSpeech EngineまたはVOICEVOX Engine
+* PipeWire
+* `pw-play`
+* OBS Studio
+* obs-pipewire-audio-captureプラグイン
+
+VOICEVOX Engineだけを使う場合、AivisSpeech Engineは必須ではありません。
 
 ## セットアップ
 
-### Python 仮想環境
+### リポジトリを取得
+
+```bash
+git clone https://github.com/tobiishundei/AivisVoiceBridge.git
+cd AivisVoiceBridge
+```
+
+### Python仮想環境
 
 ```bash
 python -m venv .venv
 source .venv/bin/activate
-pip install -r requirements.txt
+python -m pip install -r requirements.txt
 ```
 
 ### 設定ファイルの作成
 
-`settings/config.json.example` をコピーして、実際の設定ファイルを作成します。
+サンプル設定をコピーします。
 
 ```bash
 cp settings/config.json.example settings/config.json
 ```
 
-`settings/config.json` に Twitch の `client_id`、`client_secret`、チャンネル名などを設定します。
+`settings/config.json` に、Twitch Developer Consoleで取得した次の情報を設定します。
 
-`settings/config.json` は秘密情報を含むため Git 管理しません。
+* `client_id`
+* `client_secret`
+* Twitchチャンネル名
+
+`settings/config.json` は秘密情報を含むためGit管理されません。
+
+## Twitchアプリの準備
+
+Twitch Developer Consoleでアプリを作成します。
+
+設定例:
+
+```text
+OAuth Redirect URL:
+http://localhost:17563
+```
+
+Twitch Developer Consoleに登録するRedirect URLと、`settings/config.json` の `redirect_uri` は完全に同じ値にしてください。
+
+初回起動時にブラウザ認証が開始され、認証情報は次へ保存されます。
+
+```text
+tokens/user_token.json
+```
+
+トークンやClient SecretはGitHubへ公開しないでください。
 
 ## 起動方法
 
-通常起動:
+### 通常起動
 
 ```bash
 python main.py
 ```
 
-OBS 初回設定用の音声テスト:
+初回起動時またはトークンがない場合は、Twitchのブラウザ認証が開始されます。
+
+### Web UI
+
+```bash
+python -m webui.app
+```
+
+### OBS初回設定用の音声テスト
 
 ```bash
 python main.py --audio-test
 ```
 
-`--audio-test` は Twitch には接続せず、AivisSpeech Engine と音声出力だけを使って長めのテスト音声を再生します。
+`--audio-test` はTwitchには接続せず、音声エンジンと音声出力だけを使用します。
 
-## OBS Studio で読み上げ音声を個別キャプチャする
+OBS側でAivisVoiceBridgeのPipeWire音声ノードを選択しやすいよう、通常より長いテスト音声を再生します。
 
-AivisVoiceBridge は Linux / PipeWire 環境では `pw-play` を使って音声を出力します。
+## TTSエンジン
 
-OBS Studio では `obs-pipewire-audio-capture` プラグインを使うことで、AivisVoiceBridge の読み上げ音声だけを個別の音声ソースとして扱えます。
+対応しているバックエンド:
 
-### 必要なもの
+* `aivis`
+* `voicevox`
 
-- PipeWire
-- `pw-play`
-- OBS Studio
-- obs-pipewire-audio-capture プラグイン
+設定はWeb UIから切り替えられます。
 
-`pw-play` が使えるか確認します。
+設定ファイルを直接編集する場合は、`tts.backend` を変更します。
 
-```bash
-which pw-play
-```
-
-以下のように表示されればOKです。
-
-```text
-/usr/bin/pw-play
-```
-
-### AivisVoiceBridge 側の設定
-
-`settings/config.json` の `audio` を以下のように設定します。
+### AivisSpeech Engine
 
 ```json
-"audio": {
-  "backend": "pipewire",
-  "app_name": "AivisVoiceBridge",
-  "media_role": "Communication"
+"tts": {
+  "backend": "aivis"
+},
+"aivis": {
+  "host": "127.0.0.1",
+  "port": 10101
 }
 ```
 
-`app_name` は OBS 側で認識されるアプリ名です。
+### VOICEVOX Engine
 
-一度 OBS 側で選択した後に `app_name` を変更すると、OBS 側で再設定が必要になる場合があります。
-
-### OBS の初回設定
-
-OBS Studio を起動します。
-
-次に、AivisVoiceBridge の音声テストを実行します。
-
-```bash
-python main.py --audio-test
+```json
+"tts": {
+  "backend": "voicevox"
+},
+"voicevox": {
+  "host": "127.0.0.1",
+  "port": 50021
+}
 ```
 
-テスト音声が再生されている間に、OBS Studio で以下を設定します。
+AivisSpeech EngineとVOICEVOX Engineでは、話者・スタイルIDが異なります。
 
-1. ソースを追加
-2. `Application Audio Capture (PipeWire)` を選択
-3. アプリケーション一覧から `AivisVoiceBridge` を選択
-4. 音声メーターが反応することを確認
-
-テスト音声は、OBS 側でアプリケーションを選択できるように少し長めに再生されます。
-
-一度 `AivisVoiceBridge` を選択すると、以降は短い読み上げでも OBS 側で認識されます。
-
-### 通常起動時の挙動
-
-```bash
-python main.py
-```
-
-Twitch コメントが読み上げられると、OBS の `AivisVoiceBridge` ソースだけが反応します。
-
-ブラウザ、ゲーム、デスクトップ音声など、他のアプリケーション音声とは分離して扱えます。
-
-### 動作確認済みの挙動
-
-- AivisVoiceBridge の読み上げ音声だけが OBS の `AivisVoiceBridge` ソースに反応する
-- ブラウザなど別アプリの音声には反応しない
-- デスクトップ音声を無効にしても、AivisVoiceBridge の読み上げ音声だけを OBS へ送れる
-- 初回設定時は `python main.py --audio-test` を使うと選択しやすい
-
-### 注意点
-
-AivisVoiceBridge の音声ノードは、読み上げ中だけ PipeWire 上に表示されます。
-
-そのため、OBS の初回設定時には通常の短いコメント読み上げではなく、以下のテストコマンドを使ってください。
-
-```bash
-python main.py --audio-test
-```
-
-## 辞書
-
-辞書は `dictionaries/` 以下に配置します。
-
-読み込み順は以下です。
-
-1. `dictionaries/common`
-2. `dictionaries/game/<game_dictionary>`
-3. `dictionaries/personal`
-
-後から読み込まれた辞書が同じキーを上書きします。
-
-そのため、`personal` 辞書が最も優先されます。
-
-### 構成例
-
-```text
-dictionaries/
-├── common/
-│   └── common.json
-├── game/
-│   └── minecraft/
-│       └── dictionary.json
-└── personal/
-    └── personal.json
-```
+バックエンドを切り替えた場合は、そのエンジンに存在する話者とスタイルをWeb UIから選び直してください。
 
 ## 音声プロファイル
 
-`settings/config.json` の `voices` で、ユーザー種別ごとの音声を設定します。
+ユーザー種別ごとに異なる音声設定を使用できます。
 
-対応しているプロファイル名:
+対応しているプロファイル:
 
-- `default`
-- `broadcaster`
-- `moderator`
-- `vip`
-- `subscriber`
+* `default`
+* `broadcaster`
+* `moderator`
+* `vip`
+* `subscriber`
 
-優先順位は以下です。
+判定の優先順位:
 
 1. broadcaster
 2. moderator
@@ -200,7 +231,7 @@ dictionaries/
 4. subscriber
 5. default
 
-例:
+設定例:
 
 ```json
 "voices": {
@@ -214,7 +245,148 @@ dictionaries/
 }
 ```
 
-`speaker` は AivisSpeech Engine 側の話者・スタイル ID です。
+各値の意味:
+
+* `speaker`: 音声エンジン側の話者・スタイルID
+* `speed`: 話速
+* `pitch`: 音高
+* `volume`: 音量
+* `enabled`: この音声プロファイルを有効にするか
+
+これらはWeb UIから設定できます。
+
+## 読み上げ基本設定
+
+```json
+"speech": {
+  "max_length": 120,
+  "cooldown": 3.0,
+  "skip_url_only": true,
+  "skip_empty": true
+}
+```
+
+* `max_length`: 最大読み上げ文字数
+* `cooldown`: 同一ユーザーの連続コメントに対する待機時間
+* `skip_url_only`: URLだけのコメントを読み上げない
+* `skip_empty`: フィルター後に空になったコメントを読み上げない
+
+これらもWeb UIから変更できます。
+
+## 辞書
+
+辞書は `dictionaries/` 以下に配置します。
+
+```text
+dictionaries/
+├── common/
+│   └── common.json
+├── game/
+│   └── minecraft/
+│       └── dictionary.json
+└── personal/
+    └── personal.json
+```
+
+読み込み順:
+
+1. `dictionaries/common`
+2. `dictionaries/game/<game_dictionary>`
+3. `dictionaries/personal`
+
+後から読み込まれた辞書が、同じキーを上書きします。
+
+そのため、優先順位は次のとおりです。
+
+```text
+personal > game > common
+```
+
+辞書ファイルの形式:
+
+```json
+{
+  "クリーパー": "くりーぱー",
+  "ネザライト": "ネザーライト"
+}
+```
+
+Web UIでは次を確認できます。
+
+* 利用可能なゲーム辞書
+* 選択中のゲーム辞書
+* JSONファイル数
+* 登録語数
+* 統合後の有効語数
+* JSON形式や値のエラー
+
+辞書の単語追加・削除は、現在はJSONファイルを直接編集します。
+
+## Twitch再認証
+
+Web UIにはTwitch認証状態が表示されます。
+
+再認証する場合は、次の順番で操作してください。
+
+1. `python main.py` で動いている本体を停止
+2. Web UIで「再認証の準備をする」を押す
+3. AivisVoiceBridge本体を再起動
+4. ブラウザでTwitch認証を完了
+
+以前のトークンは次のような名前で退避されます。
+
+```text
+tokens/user_token.json.reauth-backup
+```
+
+Web UIにはアクセストークンやClient Secretは表示されません。
+
+## OBS Studioで読み上げ音声を個別キャプチャする
+
+AivisVoiceBridgeはLinux / PipeWire環境で `pw-play` を使用します。
+
+OBS Studioでは、obs-pipewire-audio-captureプラグインを使うことで、AivisVoiceBridgeの音声だけを個別ソースとして扱えます。
+
+### `pw-play` の確認
+
+```bash
+which pw-play
+```
+
+正常な例:
+
+```text
+/usr/bin/pw-play
+```
+
+### AivisVoiceBridge側の設定
+
+```json
+"audio": {
+  "backend": "pipewire",
+  "app_name": "AivisVoiceBridge",
+  "media_role": "Communication"
+}
+```
+
+### OBS初回設定
+
+OBS Studioを起動した状態で、次を実行します。
+
+```bash
+python main.py --audio-test
+```
+
+テスト音声が再生されている間に、OBSで次を設定します。
+
+1. ソースを追加
+2. `Application Audio Capture (PipeWire)` を選択
+3. アプリケーション一覧から `AivisVoiceBridge` を選択
+4. 音声メーターが反応することを確認
+
+読み上げ音声のノードは、音声再生中だけPipeWire上に表示される場合があります。
+
+初回設定では、通常起動より `--audio-test` の使用をおすすめします。
 
 ## プロジェクト構成
 
@@ -222,50 +394,25 @@ dictionaries/
 .
 ├── audio/        # 音声出力バックエンド
 ├── commands/     # CLI用コマンド
-├── core/         # アプリケーション設定・起動管理
+├── core/         # 設定とアプリケーション管理
 ├── dictionaries/ # 読み替え辞書
 ├── filters/      # テキスト正規化
 ├── models/       # 共通データモデル
-├── services/     # 辞書、読み上げポリシー、音声プロファイル管理
-├── speech/       # 音声合成と読み上げキュー
+├── services/     # 辞書、ポリシー、音声プロファイル
+├── speech/       # 読み上げキューとワーカー
+├── tts/          # TTSエンジン
 ├── twitch/       # Twitch接続とイベント処理
+├── webui/        # ローカルWeb設定画面
+├── VERSION
 ├── main.py
 └── requirements.txt
 ```
 
 ## トラブルシューティング
 
-### `pw-play` が見つからない
+### Twitchコメントが読まれない
 
-```bash
-which pw-play
-```
-
-で確認してください。
-
-見つからない場合は、PipeWire 関連パッケージを確認してください。
-
-### OBS のアプリ一覧に AivisVoiceBridge が出ない
-
-短い読み上げでは、PipeWire ノードがすぐに消えて一覧に出ないことがあります。
-
-初回設定時は以下を実行してください。
-
-```bash
-python main.py --audio-test
-```
-
-テスト音声が再生されている間に OBS 側で `AivisVoiceBridge` を選択します。
-
-### `Unclosed client session` が出る
-
-アプリの終了処理が正しく通っていない可能性があります。
-
-通常は `Ctrl+C` で終了すれば、`Application.stop()` を通して AivisSpeech Engine との HTTP セッションが閉じられます。
-
-### コメントが読まれない
-
-ログに以下のような `Skip:` が出ていないか確認してください。
+ログに次のような表示がないか確認してください。
 
 ```text
 Skip: cooldown
@@ -273,188 +420,102 @@ Skip: url_only
 Skip: too_long
 ```
 
-それぞれ、連投制限、URLのみ、長文制限によって読み上げがスキップされています。
+それぞれ、連投制限、URLのみ、最大文字数によるスキップです。
 
-## v1.0 ロードマップ
+### 音声エンジンに接続できない
 
-- [x] Twitch コメント受信
-- [x] AivisSpeech Engine 連携
-- [x] PipeWire / OBS 個別音声キャプチャ
-- [x] `--audio-test`
-- [x] 辞書読み替え
-- [x] 音声プロファイル
-- [x] 読み上げポリシー
-- [x] TTSエンジン抽象化
-- [x] VOICEVOX Engine 対応
-- [x] README 整備
-- [x] config.json.example 整備
+Web UIから次を確認してください。
 
-## 今後の予定
+* 選択しているTTSエンジン
+* ホスト
+* ポート
+* 音声エンジンが起動しているか
 
-v1.0 では、Twitch + AivisSpeech / VOICEVOX + PipeWire + OBS の構成に絞って完成を目指します。
+標準ポート:
 
-YouTube 連携、GUI化、完全 Docker 化は v1.1 以降の検討対象です。
-
-
-## TTSエンジンの切り替え
-
-AivisVoiceBridge は TTS エンジンを切り替えられます。
-
-現在対応しているバックエンド:
-
-- `aivis`
-- `voicevox`
-
-### AivisSpeech Engine を使う場合
-
-`settings/config.json` の `tts.backend` を `aivis` にします。
-
-```json
-"tts": {
-  "backend": "aivis"
-},
-
-"aivis": {
-  "host": "127.0.0.1",
-  "port": 10101
-}
+```text
+AivisSpeech Engine: 10101
+VOICEVOX Engine:    50021
 ```
 
-`voices` の `speaker` には、AivisSpeech Engine 側の話者・スタイル ID を指定します。
+### 話者が想定と異なる
 
-### VOICEVOX Engine を使う場合
+AivisSpeech EngineとVOICEVOX Engineでは、同じ数値のIDでも別の話者を指す場合があります。
 
-`settings/config.json` の `tts.backend` を `voicevox` にします。
+Web UIで接続中のエンジンから話者一覧を取得し、話者とスタイルを選び直してください。
 
-```json
-"tts": {
-  "backend": "voicevox"
-},
+### OBSのアプリ一覧に表示されない
 
-"voicevox": {
-  "host": "127.0.0.1",
-  "port": 50021
-}
-```
-
-`voices` の `speaker` には、VOICEVOX Engine 側の speaker/style ID を指定します。
-
-VOICEVOX Engine が起動している状態で、以下のコマンドから利用可能な話者IDを確認できます。
-
-```bash
-curl http://127.0.0.1:50021/speakers
-```
-
-返ってきた JSON の `styles[].id` が、`settings/config.json` の `speaker` に指定する値です。
-
-### 注意点
-
-AivisSpeech Engine と VOICEVOX Engine では、同じ `speaker` 数値でも別の話者を指す場合があります。
-
-TTSバックエンドを切り替える場合は、`voices` の `speaker` も対応するエンジンのIDに変更してください。
-
-## 動作確認手順
-
-v1.0 前の基本的な動作確認手順です。
-
-### AivisSpeech Engine で確認する
-
-AivisSpeech Engine を起動した状態で、`settings/config.json` を以下のように設定します。
-
-```json
-"tts": {
-  "backend": "aivis"
-},
-
-"aivis": {
-  "host": "127.0.0.1",
-  "port": 10101
-}
-```
-
-その後、音声テストを実行します。
+次を実行します。
 
 ```bash
 python main.py --audio-test
 ```
 
-OBS の `obs-pipewire-audio-capture` 側で `AivisVoiceBridge` が表示され、読み上げ音声だけが反応すれば成功です。
+テスト音声が流れている間に、OBS側で `AivisVoiceBridge` を選択してください。
 
-通常起動も確認します。
+### `Unclosed client session` が表示される
 
-```bash
-python main.py
+終了処理が正しく通らなかった可能性があります。
+
+通常は起動したターミナルで `Ctrl+C` を押し、`Application.stop()` を通して終了してください。
+
+### Web UIでFlaskの警告が表示される
+
+次の警告は、Flask内蔵サーバーが本番Webサービス向けではないことを示しています。
+
+```text
+WARNING: This is a development server.
 ```
 
-Twitch チャンネルでコメントを投稿し、AivisSpeech Engine の音声で読み上げられれば成功です。
+AivisVoiceBridgeのWeb UIは `127.0.0.1` で動くローカル専用画面として使用するため、通常は問題ありません。
 
-### VOICEVOX Engine で確認する
+インターネットへ公開しないでください。
 
-VOICEVOX Engine を起動した状態で、`settings/config.json` を以下のように設定します。
+## v1.1.0で追加された機能
 
-```json
-"tts": {
-  "backend": "voicevox"
-},
+* ローカルWeb設定画面
+* AivisSpeech / VOICEVOX切り替え
+* 音声エンジン接続確認
+* 話者・スタイル一覧取得
+* 話者・スタイル選択
+* テスト読み上げ
+* 話速・音高・音量設定
+* ユーザー種別ごとの音声プロファイル編集
+* 読み上げ基本設定
+* Twitchチャンネル設定
+* Twitch認証状態表示
+* Twitch再認証準備
+* ゲーム辞書選択
+* 辞書ファイル状態と登録語数表示
+* 設定ファイルの自動バックアップ
 
-"voicevox": {
-  "host": "127.0.0.1",
-  "port": 50021
-}
-```
+## 今後の候補
 
-VOICEVOX の話者 ID は以下で確認できます。
-
-```bash
-curl http://127.0.0.1:50021/speakers
-```
-
-返ってきた JSON の `styles[].id` を、`voices` の `speaker` に設定します。
-
-設定後、音声テストを実行します。
-
-```bash
-python main.py --audio-test
-```
-
-VOICEVOX の音声でテスト音声が再生されれば成功です。
-
-通常起動も確認します。
-
-```bash
-python main.py
-```
-
-Twitch チャンネルでコメントを投稿し、VOICEVOX の音声で読み上げられれば成功です。
-
-### OBS 側の確認
-
-OBS Studio では、`obs-pipewire-audio-capture` のアプリ別音声キャプチャで `AivisVoiceBridge` を選択します。
-
-確認ポイント:
-
-- `python main.py --audio-test` 実行中に `AivisVoiceBridge` がアプリ一覧へ表示される
-- 読み上げ音声にだけ OBS の音声メーターが反応する
-- ブラウザ、ゲーム、デスクトップ音声には反応しない
-- 通常起動後の Twitch コメント読み上げでも同じソースに音声が入る
-
-これらが確認できれば、OBS 個別音声キャプチャの設定は完了です。
-
+* 辞書のブラウザ編集
+* 音声出力設定のWeb UI化
+* フィルタールールのON/OFF
+* AivisSpeechとVOICEVOXの同時利用
+* ユーザーごとの個別音声
+* Web UIからの本体起動・停止
+* Windows向け導入方法の整備
 
 ## ライセンス
 
-AivisVoiceBridge 本体は MIT License で公開しています。
+AivisVoiceBridge本体はMIT Licenseで公開しています。
 
-ただし、AivisSpeech Engine、VOICEVOX Engine、各音声モデル・音声ライブラリ、OBS Studio、obs-pipewire-audio-capture などの外部ソフトウェアは、それぞれのライセンス・利用規約に従ってください。
+AivisSpeech Engine、VOICEVOX Engine、各音声モデル、音声ライブラリ、OBS Studio、obs-pipewire-audio-captureなどの外部ソフトウェアは、それぞれのライセンスや利用規約に従ってください。
 
-本リポジトリには、TTSエンジン本体、音声モデル、Twitchトークン、個人用設定ファイルは含めません。
+本リポジトリには次のものを含めません。
 
-VOICEVOX を利用する場合は、VOICEVOX 本体および使用する音声ライブラリの利用規約を確認してください。
-
-AivisSpeech を利用する場合も、AivisSpeech Engine 本体および使用する音声合成モデルのライセンス・利用条件を確認してください。
+* TTSエンジン本体
+* 音声モデル
+* Twitchトークン
+* Client Secretを含む個人設定
+* 個人用辞書
 
 ## 謝辞
 
-OBS Studio での PipeWire アプリ別音声キャプチャには、obs-pipewire-audio-capture プラグインを利用しています。
+OBS StudioでのPipeWireアプリ別音声キャプチャには、obs-pipewire-audio-captureプラグインを利用しています。
 
-AivisVoiceBridge の音声を OBS 上で個別ソースとして扱えるのは、このプラグインのおかげです。開発者の方に感謝します。
+AivisVoiceBridgeの音声をOBS上で個別ソースとして扱える仕組みを提供している開発者の方に感謝します。

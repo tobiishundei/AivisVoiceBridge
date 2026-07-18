@@ -385,6 +385,126 @@
             color: #888888;
             font-size: 12px;
         }
+
+        .form-input {
+            width: 100%;
+            min-height: 44px;
+            padding: 9px 12px;
+
+            color: #222222;
+            background-color: #ffffff;
+
+            border: 1px solid #cccccc;
+            border-radius: 8px;
+
+            font: inherit;
+        }
+
+        .form-input:focus {
+            border-color: #315fbc;
+            outline: 3px solid rgba(49, 95, 188, 0.15);
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+
+            cursor: pointer;
+            line-height: 1.5;
+        }
+
+        .checkbox-label input {
+            flex-shrink: 0;
+            margin-top: 4px;
+        }
+
+        .form-help {
+            margin: 0;
+
+            color: #777777;
+            font-size: 13px;
+            line-height: 1.5;
+        }
+
+        .dictionary-summary {
+            display: grid;
+            grid-template-columns:
+                repeat(auto-fit, minmax(180px, 1fr));
+            gap: 12px;
+
+            margin-top: 18px;
+        }
+
+        .dictionary-stat {
+            padding: 14px;
+
+            background-color: #f7f7f7;
+            border: 1px solid #e1e1e1;
+            border-radius: 8px;
+        }
+
+        .dictionary-stat-label {
+            margin: 0 0 6px;
+
+            color: #666666;
+            font-size: 13px;
+        }
+
+        .dictionary-stat-value {
+            margin: 0;
+
+            font-size: 20px;
+            font-weight: 700;
+        }
+
+        .dictionary-section {
+            margin-top: 20px;
+            padding-top: 20px;
+
+            border-top: 1px solid #eeeeee;
+        }
+
+        .dictionary-section h3 {
+            margin: 0 0 12px;
+            font-size: 17px;
+        }
+
+        .dictionary-files {
+            display: grid;
+            gap: 8px;
+
+            margin: 12px 0 0;
+            padding: 0;
+
+            list-style: none;
+        }
+
+        .dictionary-file {
+            display: flex;
+            justify-content: space-between;
+            gap: 12px;
+
+            padding: 10px 12px;
+
+            background-color: #f8f8f8;
+            border-radius: 7px;
+
+            font-size: 14px;
+        }
+
+        .dictionary-file-error {
+            color: #a52b2b;
+            background-color: #fff0f0;
+        }
+
+        .error-list {
+            margin: 12px 0 0;
+            padding-left: 20px;
+
+            color: #a52b2b;
+            line-height: 1.6;
+        }
     </style>
 </head>
 
@@ -466,6 +586,479 @@
                 </div>
             </div>
             {% endif %}
+        </section>
+        {% endif %}
+
+        {% if config_loaded %}
+        <section class="card">
+            <h2>読み上げ基本設定</h2>
+
+            <form method="post" action="{{ url_for('save_speech_settings') }}">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label class="form-label" for="speech-max-length">
+                            最大読み上げ文字数
+                        </label>
+
+                        <input class="form-input" id="speech-max-length" name="max_length" type="number" min="1"
+                            max="1000" step="1" value="{{ speech_settings.max_length }}" required>
+
+                        <p class="form-help">
+                            この文字数を超えるコメントの扱いは、
+                            現在のAivisVoiceBridge本体の処理に従います。
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="speech-cooldown">
+                            読み上げ間隔
+                        </label>
+
+                        <input class="form-input" id="speech-cooldown" name="cooldown" type="number" min="0" max="60"
+                            step="0.1" value="{{ speech_settings.cooldown }}" required>
+
+                        <p class="form-help">
+                            コメントを読み上げた後、次のコメントを
+                            処理するまでの待機時間です。単位は秒です。
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input name="skip_url_only" type="checkbox" {% if speech_settings.skip_url_only %} checked
+                                {% endif %}>
+
+                            <span>
+                                <strong>
+                                    URLだけのコメントを無視する
+                                </strong>
+
+                                <br>
+
+                                <span class="form-help">
+                                    コメントの内容がURLだけの場合は
+                                    読み上げません。
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="checkbox-label">
+                            <input name="skip_empty" type="checkbox" {% if speech_settings.skip_empty %} checked {%
+                                endif %}>
+
+                            <span>
+                                <strong>
+                                    空のコメントを無視する
+                                </strong>
+
+                                <br>
+
+                                <span class="form-help">
+                                    フィルター処理後に文字が残らなかった
+                                    コメントを読み上げません。
+                                </span>
+                            </span>
+                        </label>
+                    </div>
+
+                </div>
+
+                <div class="button-row">
+                    <button class="button button-save" type="submit">
+                        読み上げ設定を保存
+                    </button>
+                </div>
+            </form>
+
+            <p class="notice">
+                保存先は
+                <span class="code-value">speech</span>
+                セクションです。AivisVoiceBridge本体が起動中の場合、
+                反映には本体の再起動が必要です。
+            </p>
+        </section>
+        {% endif %}
+
+        {% if config_loaded %}
+        <section class="card">
+            <h2>Twitchチャンネル設定</h2>
+
+            <form method="post" action="{{ url_for('save_twitch_settings') }}">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label class="form-label" for="twitch-channel">
+                            Twitchチャンネル名
+                        </label>
+
+                        <input class="form-input" id="twitch-channel" name="channel" type="text" maxlength="25"
+                            value="{{ twitch_settings.channel }}" autocomplete="off" required>
+
+                        <p class="form-help">
+                            TwitchのチャンネルURL全体ではなく、
+                            チャンネル名だけを入力します。
+                        </p>
+
+                        <p class="form-help">
+                            例：
+                            <span class="code-value">
+                                tobiishundei
+                            </span>
+                        </p>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="twitch-redirect-uri">
+                            Redirect URI
+                        </label>
+
+                        <input class="form-input" id="twitch-redirect-uri" name="redirect_uri" type="url"
+                            value="{{ twitch_settings.redirect_uri }}" autocomplete="off" required>
+
+                        <p class="form-help">
+                            Twitch Developer Consoleに登録した
+                            OAuth Redirect URLと完全に同じ値を指定します。
+                        </p>
+                    </div>
+
+                </div>
+
+                <div class="button-row">
+                    <button class="button button-save" type="submit">
+                        Twitch設定を保存
+                    </button>
+                </div>
+            </form>
+
+            <p class="notice">
+                AivisVoiceBridge本体が起動中の場合、
+                チャンネル変更の反映には本体の再起動が必要です。
+                Redirect URIを変更した場合は、
+                Twitch Developer Console側も同じ値へ変更してください。
+            </p>
+        </section>
+        {% endif %}
+
+        {% if config_loaded %}
+        <section class="card">
+            <h2>Twitch認証状態</h2>
+
+            {% if twitch_auth_status.authenticated %}
+            <div class="status status-success">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ twitch_auth_status.message }}
+                    </p>
+                </div>
+            </div>
+            {% elif twitch_auth_status.token_exists %}
+            <div class="status status-error">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ twitch_auth_status.message }}
+                    </p>
+                </div>
+            </div>
+            {% else %}
+            <div class="status status-error">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ twitch_auth_status.message }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <dl class="settings-list" style="margin-top: 20px;">
+                <div class="settings-row">
+                    <dt>トークンファイル</dt>
+
+                    <dd>
+                        {% if twitch_auth_status.token_exists %}
+                        存在します
+                        {% else %}
+                        存在しません
+                        {% endif %}
+                    </dd>
+                </div>
+
+                <div class="settings-row">
+                    <dt>トークン保存先</dt>
+
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.token_path }}
+                        </span>
+                    </dd>
+                </div>
+
+                {% if twitch_auth_status.display_name %}
+                <div class="settings-row">
+                    <dt>ログインユーザー</dt>
+
+                    <dd>
+                        {{ twitch_auth_status.display_name }}
+
+                        {% if twitch_auth_status.login %}
+                        <span class="code-value">
+                            {{ twitch_auth_status.login }}
+                        </span>
+                        {% endif %}
+                    </dd>
+                </div>
+                {% endif %}
+
+                {% if twitch_auth_status.user_id %}
+                <div class="settings-row">
+                    <dt>ユーザーID</dt>
+
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.user_id }}
+                        </span>
+                    </dd>
+                </div>
+                {% endif %}
+
+                {% if twitch_auth_status.checked_at %}
+                <div class="settings-row">
+                    <dt>最終認証確認</dt>
+
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.checked_at }}
+                        </span>
+                    </dd>
+                </div>
+                {% endif %}
+            </dl>
+
+            <form class="button-row" method="post" action="{{ url_for('prepare_twitch_reauth') }}" onsubmit="
+        return confirm(
+          '現在のトークンを退避して、'
+          + '次回起動時に再認証します。よろしいですか？'
+        );
+      ">
+                <button class="button" type="submit">
+                    再認証の準備をする
+                </button>
+            </form>
+
+            <p class="notice">
+                再認証するときはAivisVoiceBridge本体を停止してから
+                このボタンを押し、その後本体を再起動してください。
+                トークン本体やClient Secretはこの画面に表示しません。
+            </p>
+        </section>
+        {% endif %}
+
+        {% if config_loaded %}
+        <section class="card">
+            <h2>辞書設定</h2>
+
+            <form method="post" action="{{ url_for('save_dictionary_settings') }}">
+                <div class="form-group">
+                    <label class="form-label" for="game-dictionary-select">
+                        使用するゲーム辞書
+                    </label>
+
+                    {% if dictionary_status.available_games %}
+                    <select class="form-select" id="game-dictionary-select" name="game_dictionary" required>
+                        {% for game_name in dictionary_status.available_games %}
+                        <option value="{{ game_name }}" {% if game_name==dictionary_status.selected_game %} selected {%
+                            endif %}>
+                            {{ game_name }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                    {% else %}
+                    <select class="form-select" id="game-dictionary-select" name="game_dictionary" disabled>
+                        <option>
+                            利用可能なゲーム辞書がありません
+                        </option>
+                    </select>
+                    {% endif %}
+
+                    <p class="form-help">
+                        <span class="code-value">
+                            dictionaries/game
+                        </span>
+                        直下のディレクトリを自動検出しています。
+                    </p>
+                </div>
+
+                {% if dictionary_status.available_games %}
+                <div class="button-row">
+                    <button class="button button-save" type="submit">
+                        辞書設定を保存
+                    </button>
+                </div>
+                {% endif %}
+            </form>
+
+            {% if dictionary_status.has_errors %}
+            <div class="status status-error" style="margin-top: 20px;">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        辞書ファイルに確認が必要な問題があります。
+                    </p>
+
+                    <ul class="error-list">
+                        {% for error in dictionary_status.errors %}
+                        <li>{{ error }}</li>
+                        {% endfor %}
+                    </ul>
+                </div>
+            </div>
+            {% else %}
+            <div class="status status-success" style="margin-top: 20px;">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        すべての辞書ファイルを正常に読み取れました。
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+
+            <div class="dictionary-summary">
+                <div class="dictionary-stat">
+                    <p class="dictionary-stat-label">
+                        共通辞書
+                    </p>
+
+                    <p class="dictionary-stat-value">
+                        {{ dictionary_status.common.entry_count }}語
+                    </p>
+                </div>
+
+                <div class="dictionary-stat">
+                    <p class="dictionary-stat-label">
+                        ゲーム辞書
+                    </p>
+
+                    <p class="dictionary-stat-value">
+                        {{ dictionary_status.game.entry_count }}語
+                    </p>
+                </div>
+
+                <div class="dictionary-stat">
+                    <p class="dictionary-stat-label">
+                        個人辞書
+                    </p>
+
+                    <p class="dictionary-stat-value">
+                        {{ dictionary_status.personal.entry_count }}語
+                    </p>
+                </div>
+
+                <div class="dictionary-stat">
+                    <p class="dictionary-stat-label">
+                        統合後の有効語数
+                    </p>
+
+                    <p class="dictionary-stat-value">
+                        {{ dictionary_status.effective_entry_count }}語
+                    </p>
+                </div>
+            </div>
+
+            {% set dictionary_groups = [
+            ("共通辞書", dictionary_status.common),
+            (
+            "ゲーム辞書 / " ~ dictionary_status.selected_game,
+            dictionary_status.game
+            ),
+            ("個人辞書", dictionary_status.personal)
+            ] %}
+
+            {% for label, dictionary in dictionary_groups %}
+            <div class="dictionary-section">
+                <h3>{{ label }}</h3>
+
+                <dl class="settings-list">
+                    <div class="settings-row">
+                        <dt>ディレクトリ</dt>
+
+                        <dd>
+                            <span class="code-value">
+                                {{ dictionary.directory }}
+                            </span>
+                        </dd>
+                    </div>
+
+                    <div class="settings-row">
+                        <dt>JSONファイル数</dt>
+
+                        <dd>
+                            {{ dictionary.file_count }}件
+                        </dd>
+                    </div>
+
+                    <div class="settings-row">
+                        <dt>登録語数</dt>
+
+                        <dd>
+                            {{ dictionary.entry_count }}語
+                        </dd>
+                    </div>
+                </dl>
+
+                {% if dictionary.files %}
+                <ul class="dictionary-files">
+                    {% for file in dictionary.files %}
+                    <li class="
+                  dictionary-file
+                  {% if not file.success %}
+                    dictionary-file-error
+                  {% endif %}
+                ">
+                        <span>
+                            {{ file.path }}
+
+                            {% if file.error %}
+                            <br>
+                            {{ file.error }}
+                            {% endif %}
+                        </span>
+
+                        <span>
+                            {% if file.success %}
+                            {{ file.entry_count }}語
+                            {% else %}
+                            エラー
+                            {% endif %}
+                        </span>
+                    </li>
+                    {% endfor %}
+                </ul>
+                {% endif %}
+            </div>
+            {% endfor %}
+
+            <p class="notice">
+                辞書は
+                <span class="code-value">common</span>
+                →
+                <span class="code-value">game</span>
+                →
+                <span class="code-value">personal</span>
+                の順に読み込まれます。
+                同じ単語がある場合は、後から読み込まれる辞書が優先されます。
+                ゲーム辞書変更の反映にはAivisVoiceBridge本体の再起動が必要です。
+            </p>
         </section>
         {% endif %}
 
@@ -1273,7 +1866,7 @@
         {% endif %}
 
         <footer class="footer">
-            AivisVoiceBridge
+            AivisVoiceBridge v{{ app_version }}
         </footer>
 
     </main>
