@@ -109,7 +109,10 @@ class SpeechWorker:
         )
 
         self.logger.info(
-            f"VoiceProfile: {profile.name}"
+            "VoiceProfile: "
+            f"{profile.name} "
+            f"(backend={profile.backend}, "
+            f"speaker={profile.speaker})"
         )
 
         wav = await self.tts.synthesize(

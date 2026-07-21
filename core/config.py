@@ -237,16 +237,46 @@ def _load_audio_config(data: dict) -> AudioConfig:
     )
 
 
-def _load_voice_profiles(data: dict) -> dict[str, VoiceProfile]:
+def _load_voice_profiles(
+    data: dict,
+) -> dict[str, VoiceProfile]:
     """
     読み上げ用の音声プロファイルを読み込む。
-    """
 
+    profileごとにbackendが指定されていない場合は、
+    従来のtts.backendを引き継ぐ。
+    """
     profiles = {}
 
+    default_backend = (
+        data.get(
+            "tts",
+            {},
+        ).get(
+            "backend",
+            "aivis",
+        )
+    )
+
     for name, profile in data["voices"].items():
+        backend = profile.get(
+            "backend",
+            default_backend,
+        )
+
+        if backend not in {
+            "aivis",
+            "voicevox",
+        }:
+            raise ValueError(
+                "Unknown TTS backend in "
+                f"voice profile '{name}': "
+                f"{backend}"
+            )
+
         profiles[name] = VoiceProfile(
             name=name,
+            backend=backend,
             speaker=profile["speaker"],
             speed=profile.get(
                 "speed",

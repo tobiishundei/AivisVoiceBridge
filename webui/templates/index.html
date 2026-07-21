@@ -589,6 +589,335 @@
         </section>
         {% endif %}
 
+        {% if engine %}
+        <section class="card">
+            <h2>音声エンジン設定</h2>
+
+            <form method="post" action="{{ url_for('save_engine_settings') }}">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label class="form-label" for="backend-select">
+                            音声エンジン
+                        </label>
+
+                        <select class="form-select" id="backend-select" name="backend">
+                            {% for backend_name, label in tts_backend_names.items() %}
+                            <option value="{{ backend_name }}" {% if backend_name==engine.backend %} selected {% endif
+                                %}>
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="engine-host">
+                            ホスト
+                        </label>
+
+                        <input class="form-select" id="engine-host" name="host" type="text" value="{{ engine.host }}"
+                            autocomplete="off" required>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="engine-port">
+                            ポート
+                        </label>
+
+                        <input class="form-select" id="engine-port" name="port" type="number" min="1" max="65535"
+                            value="{{ engine.port }}" required>
+                    </div>
+
+                </div>
+
+                <dl class="settings-list" style="margin-top: 20px;">
+                    <div class="settings-row">
+                        <dt>現在の接続先</dt>
+
+                        <dd>
+                            <span class="code-value">
+                                {{ engine.base_url }}
+                            </span>
+                        </dd>
+                    </div>
+
+                    <div class="settings-row">
+                        <dt>設定可能な役割</dt>
+
+                        <dd>
+                            default / broadcaster / moderator /
+                            vip / subscriber
+                        </dd>
+                    </div>
+                </dl>
+
+                <div class="button-row">
+                    <button class="button button-save" type="submit">
+                        音声エンジン設定を保存
+                    </button>
+                </div>
+            </form>
+
+            <form class="button-row" method="post" action="{{ url_for('check_engine') }}">
+                <button class="button" type="submit">
+                    接続確認・話者一覧を取得
+                </button>
+            </form>
+
+            <p class="notice">
+                AivisSpeech Engineの標準ポートは
+                <span class="code-value">10101</span>、
+                VOICEVOX Engineの標準ポートは
+                <span class="code-value">50021</span>
+                です。
+            </p>
+        </section>
+        {% endif %}
+
+        {% if connection_result %}
+        <section class="card">
+            <h2>接続確認結果</h2>
+
+            {% if connection_result.success %}
+            <div class="status status-success">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ connection_result.message }}
+                    </p>
+
+                    {% if connection_result.version %}
+                    <p class="status-detail">
+                        バージョン：
+                        <span class="code-value">
+                            {{ connection_result.version }}
+                        </span>
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+            {% else %}
+            <div class="status status-error">
+                <span class="status-indicator"></span>
+
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ connection_result.message }}
+                    </p>
+                </div>
+            </div>
+            {% endif %}
+        </section>
+        {% endif %}
+
+        {% if config_loaded %}
+        <section class="card">
+            <h2>役割別音声設定</h2>
+
+            <form method="post" action="{{ url_for('save_voice_profile') }}">
+                <div class="form-grid">
+
+                    <div class="form-group">
+                        <label class="form-label" for="profile-select">
+                            設定対象
+                        </label>
+
+                        <select class="form-select" id="profile-select" name="profile_name">
+                            {% for profile_name, label in voice_profile_names.items() %}
+                            <option value="{{ profile_name }}">
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="profile-backend-select">
+                            音声エンジン
+                        </label>
+
+                        <select
+                            class="form-select"
+                            id="profile-backend-select"
+                            name="profile_backend"
+                            required
+                        >
+                            {% for backend_name, label in tts_backend_names.items() %}
+                            <option value="{{ backend_name }}">
+                                {{ label }}
+                            </option>
+                            {% endfor %}
+                        </select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="speaker-select">
+                            話者
+                        </label>
+
+                        <select class="form-select" id="speaker-select"></select>
+                    </div>
+
+                    <div class="form-group">
+                        <label class="form-label" for="style-select">
+                            スタイル
+                        </label>
+
+                        <select class="form-select" id="style-select" name="style_id" required></select>
+                    </div>
+
+                </div>
+
+                <div class="selection-result">
+                    <p>
+                        選択中の話者：
+                        <strong id="selected-speaker-name">
+                            -
+                        </strong>
+                    </p>
+
+                    <p>
+                        選択中のスタイル：
+                        <strong id="selected-style-name">
+                            -
+                        </strong>
+                    </p>
+
+                    <p>
+                        スタイルID：
+                        <span class="code-value" id="selected-style-id">
+                            -
+                        </span>
+                    </p>
+
+                    <div class="form-grid" style="margin-top: 20px;">
+                        <div class="range-group">
+                            <div class="range-header">
+                                <label class="form-label" for="speed-range">
+                                    話速
+                                </label>
+
+                                <span class="range-value" id="speed-value">
+                                    1.00
+                                </span>
+                            </div>
+
+                            <input class="form-range" id="speed-range" name="speed" type="range" min="0.5" max="2.0"
+                                step="0.05" value="1.0">
+
+                            <div class="range-scale">
+                                <span>遅い 0.50</span>
+                                <span>標準 1.00</span>
+                                <span>速い 2.00</span>
+                            </div>
+                        </div>
+
+                        <div class="range-group">
+                            <div class="range-header">
+                                <label class="form-label" for="pitch-range">
+                                    音高
+                                </label>
+
+                                <span class="range-value" id="pitch-value">
+                                    0.00
+                                </span>
+                            </div>
+
+                            <input class="form-range" id="pitch-range" name="pitch" type="range" min="-0.15" max="0.15"
+                                step="0.01" value="0.0">
+
+                            <div class="range-scale">
+                                <span>低い -0.15</span>
+                                <span>標準 0.00</span>
+                                <span>高い 0.15</span>
+                            </div>
+                        </div>
+
+                        <div class="range-group">
+                            <div class="range-header">
+                                <label class="form-label" for="volume-range">
+                                    音量
+                                </label>
+
+                                <span class="range-value" id="volume-value">
+                                    1.00
+                                </span>
+                            </div>
+
+                            <input class="form-range" id="volume-range" name="volume" type="range" min="0.0" max="2.0"
+                                step="0.05" value="1.0">
+
+                            <div class="range-scale">
+                                <span>無音 0.00</span>
+                                <span>標準 1.00</span>
+                                <span>大きい 2.00</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label style="
+                                display: flex;
+                                align-items: center;
+                                gap: 10px;
+                                cursor: pointer;
+                            ">
+                            <input id="enabled-checkbox" name="enabled" type="checkbox" checked>
+
+                            <span class="form-label">
+                                この音声プロフィールを有効にする
+                            </span>
+                        </label>
+                    </div>
+
+                    <div class="form-group" style="margin-top: 20px;">
+                        <label class="form-label" for="test-text">
+                            テスト文章
+                        </label>
+
+                        <textarea class="form-textarea" id="test-text"
+                            maxlength="200">AivisVoiceBridgeのテスト読み上げです。</textarea>
+
+                        <span class="notice" style="margin-top: 0;">
+                            200文字以内
+                        </span>
+                    </div>
+
+                    <div class="button-row">
+                        <button class="button button-test" id="test-speech-button" type="button">
+                            選択中の声でテスト
+                        </button>
+
+                        <button class="button button-save" type="submit">
+                            選択中の役割へ保存
+                        </button>
+                    </div>
+
+                    <div class="status test-status" id="test-status">
+                        <span class="status-indicator"></span>
+
+                        <div class="status-content">
+                            <p class="status-text" id="test-status-message"></p>
+                        </div>
+                    </div>
+
+                    <audio class="audio-player" id="test-audio" controls></audio>
+
+            </form>
+
+            <p class="notice">
+                選択した役割の
+                音声エンジン・話者・スタイル・話速・音高・音量・有効状態を
+                <span class="code-value">
+                    voices
+                </span>
+                内の対応する設定へ保存します。
+                AivisVoiceBridge本体への反映には再起動が必要です。
+            </p>
+        </section>
+
         {% if config_loaded %}
         <section class="card">
             <h2>読み上げ基本設定</h2>
@@ -678,185 +1007,6 @@
                 <span class="code-value">speech</span>
                 セクションです。AivisVoiceBridge本体が起動中の場合、
                 反映には本体の再起動が必要です。
-            </p>
-        </section>
-        {% endif %}
-
-        {% if config_loaded %}
-        <section class="card">
-            <h2>Twitchチャンネル設定</h2>
-
-            <form method="post" action="{{ url_for('save_twitch_settings') }}">
-                <div class="form-grid">
-
-                    <div class="form-group">
-                        <label class="form-label" for="twitch-channel">
-                            Twitchチャンネル名
-                        </label>
-
-                        <input class="form-input" id="twitch-channel" name="channel" type="text" maxlength="25"
-                            value="{{ twitch_settings.channel }}" autocomplete="off" required>
-
-                        <p class="form-help">
-                            TwitchのチャンネルURL全体ではなく、
-                            チャンネル名だけを入力します。
-                        </p>
-
-                        <p class="form-help">
-                            例：
-                            <span class="code-value">
-                                tobiishundei
-                            </span>
-                        </p>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="twitch-redirect-uri">
-                            Redirect URI
-                        </label>
-
-                        <input class="form-input" id="twitch-redirect-uri" name="redirect_uri" type="url"
-                            value="{{ twitch_settings.redirect_uri }}" autocomplete="off" required>
-
-                        <p class="form-help">
-                            Twitch Developer Consoleに登録した
-                            OAuth Redirect URLと完全に同じ値を指定します。
-                        </p>
-                    </div>
-
-                </div>
-
-                <div class="button-row">
-                    <button class="button button-save" type="submit">
-                        Twitch設定を保存
-                    </button>
-                </div>
-            </form>
-
-            <p class="notice">
-                AivisVoiceBridge本体が起動中の場合、
-                チャンネル変更の反映には本体の再起動が必要です。
-                Redirect URIを変更した場合は、
-                Twitch Developer Console側も同じ値へ変更してください。
-            </p>
-        </section>
-        {% endif %}
-
-        {% if config_loaded %}
-        <section class="card">
-            <h2>Twitch認証状態</h2>
-
-            {% if twitch_auth_status.authenticated %}
-            <div class="status status-success">
-                <span class="status-indicator"></span>
-
-                <div class="status-content">
-                    <p class="status-text">
-                        {{ twitch_auth_status.message }}
-                    </p>
-                </div>
-            </div>
-            {% elif twitch_auth_status.token_exists %}
-            <div class="status status-error">
-                <span class="status-indicator"></span>
-
-                <div class="status-content">
-                    <p class="status-text">
-                        {{ twitch_auth_status.message }}
-                    </p>
-                </div>
-            </div>
-            {% else %}
-            <div class="status status-error">
-                <span class="status-indicator"></span>
-
-                <div class="status-content">
-                    <p class="status-text">
-                        {{ twitch_auth_status.message }}
-                    </p>
-                </div>
-            </div>
-            {% endif %}
-
-            <dl class="settings-list" style="margin-top: 20px;">
-                <div class="settings-row">
-                    <dt>トークンファイル</dt>
-
-                    <dd>
-                        {% if twitch_auth_status.token_exists %}
-                        存在します
-                        {% else %}
-                        存在しません
-                        {% endif %}
-                    </dd>
-                </div>
-
-                <div class="settings-row">
-                    <dt>トークン保存先</dt>
-
-                    <dd>
-                        <span class="code-value">
-                            {{ twitch_auth_status.token_path }}
-                        </span>
-                    </dd>
-                </div>
-
-                {% if twitch_auth_status.display_name %}
-                <div class="settings-row">
-                    <dt>ログインユーザー</dt>
-
-                    <dd>
-                        {{ twitch_auth_status.display_name }}
-
-                        {% if twitch_auth_status.login %}
-                        <span class="code-value">
-                            {{ twitch_auth_status.login }}
-                        </span>
-                        {% endif %}
-                    </dd>
-                </div>
-                {% endif %}
-
-                {% if twitch_auth_status.user_id %}
-                <div class="settings-row">
-                    <dt>ユーザーID</dt>
-
-                    <dd>
-                        <span class="code-value">
-                            {{ twitch_auth_status.user_id }}
-                        </span>
-                    </dd>
-                </div>
-                {% endif %}
-
-                {% if twitch_auth_status.checked_at %}
-                <div class="settings-row">
-                    <dt>最終認証確認</dt>
-
-                    <dd>
-                        <span class="code-value">
-                            {{ twitch_auth_status.checked_at }}
-                        </span>
-                    </dd>
-                </div>
-                {% endif %}
-            </dl>
-
-            <form class="button-row" method="post" action="{{ url_for('prepare_twitch_reauth') }}" onsubmit="
-        return confirm(
-          '現在のトークンを退避して、'
-          + '次回起動時に再認証します。よろしいですか？'
-        );
-      ">
-                <button class="button" type="submit">
-                    再認証の準備をする
-                </button>
-            </form>
-
-            <p class="notice">
-                再認証するときはAivisVoiceBridge本体を停止してから
-                このボタンを押し、その後本体を再起動してください。
-                トークン本体やClient Secretはこの画面に表示しません。
             </p>
         </section>
         {% endif %}
@@ -1062,113 +1212,88 @@
         </section>
         {% endif %}
 
-        {% if engine %}
+        {% if config_loaded %}
         <section class="card">
-            <h2>音声エンジン設定</h2>
+            <h2>Twitchチャンネル設定</h2>
 
-            <form method="post" action="{{ url_for('save_engine_settings') }}">
+            <form method="post" action="{{ url_for('save_twitch_settings') }}">
                 <div class="form-grid">
 
                     <div class="form-group">
-                        <label class="form-label" for="backend-select">
-                            音声エンジン
+                        <label class="form-label" for="twitch-channel">
+                            Twitchチャンネル名
                         </label>
 
-                        <select class="form-select" id="backend-select" name="backend">
-                            {% for backend_name, label in tts_backend_names.items() %}
-                            <option value="{{ backend_name }}" {% if backend_name==engine.backend %} selected {% endif
-                                %}>
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
+                        <input class="form-input" id="twitch-channel" name="channel" type="text" maxlength="25"
+                            value="{{ twitch_settings.channel }}" autocomplete="off" required>
+
+                        <p class="form-help">
+                            TwitchのチャンネルURL全体ではなく、
+                            チャンネル名だけを入力します。
+                        </p>
+
+                        <p class="form-help">
+                            例：
+                            <span class="code-value">
+                                tobiishundei
+                            </span>
+                        </p>
                     </div>
 
                     <div class="form-group">
-                        <label class="form-label" for="engine-host">
-                            ホスト
+                        <label class="form-label" for="twitch-redirect-uri">
+                            Redirect URI
                         </label>
 
-                        <input class="form-select" id="engine-host" name="host" type="text" value="{{ engine.host }}"
-                            autocomplete="off" required>
-                    </div>
+                        <input class="form-input" id="twitch-redirect-uri" name="redirect_uri" type="url"
+                            value="{{ twitch_settings.redirect_uri }}" autocomplete="off" required>
 
-                    <div class="form-group">
-                        <label class="form-label" for="engine-port">
-                            ポート
-                        </label>
-
-                        <input class="form-select" id="engine-port" name="port" type="number" min="1" max="65535"
-                            value="{{ engine.port }}" required>
+                        <p class="form-help">
+                            Twitch Developer Consoleに登録した
+                            OAuth Redirect URLと完全に同じ値を指定します。
+                        </p>
                     </div>
 
                 </div>
 
-                <dl class="settings-list" style="margin-top: 20px;">
-                    <div class="settings-row">
-                        <dt>現在の接続先</dt>
-
-                        <dd>
-                            <span class="code-value">
-                                {{ engine.base_url }}
-                            </span>
-                        </dd>
-                    </div>
-
-                    <div class="settings-row">
-                        <dt>設定可能な役割</dt>
-
-                        <dd>
-                            default / broadcaster / moderator /
-                            vip / subscriber
-                        </dd>
-                    </div>
-                </dl>
-
                 <div class="button-row">
                     <button class="button button-save" type="submit">
-                        音声エンジン設定を保存
+                        Twitch設定を保存
                     </button>
                 </div>
             </form>
 
-            <form class="button-row" method="post" action="{{ url_for('check_engine') }}">
-                <button class="button" type="submit">
-                    接続確認・話者一覧を取得
-                </button>
-            </form>
-
             <p class="notice">
-                AivisSpeech Engineの標準ポートは
-                <span class="code-value">10101</span>、
-                VOICEVOX Engineの標準ポートは
-                <span class="code-value">50021</span>
-                です。
+                AivisVoiceBridge本体が起動中の場合、
+                チャンネル変更の反映には本体の再起動が必要です。
+                Redirect URIを変更した場合は、
+                Twitch Developer Console側も同じ値へ変更してください。
             </p>
         </section>
         {% endif %}
 
-        {% if connection_result %}
+        {% if config_loaded %}
         <section class="card">
-            <h2>接続確認結果</h2>
+            <h2>Twitch認証状態</h2>
 
-            {% if connection_result.success %}
+            {% if twitch_auth_status.authenticated %}
             <div class="status status-success">
                 <span class="status-indicator"></span>
 
                 <div class="status-content">
                     <p class="status-text">
-                        {{ connection_result.message }}
+                        {{ twitch_auth_status.message }}
                     </p>
+                </div>
+            </div>
+            {% elif twitch_auth_status.token_exists %}
+            <div class="status status-error">
+                <span class="status-indicator"></span>
 
-                    {% if connection_result.version %}
-                    <p class="status-detail">
-                        バージョン：
-                        <span class="code-value">
-                            {{ connection_result.version }}
-                        </span>
+                <div class="status-content">
+                    <p class="status-text">
+                        {{ twitch_auth_status.message }}
                     </p>
-                    {% endif %}
                 </div>
             </div>
             {% else %}
@@ -1177,214 +1302,136 @@
 
                 <div class="status-content">
                     <p class="status-text">
-                        {{ connection_result.message }}
+                        {{ twitch_auth_status.message }}
                     </p>
                 </div>
             </div>
             {% endif %}
-        </section>
-        {% endif %}
 
-        {% if (
-        connection_result
-        and connection_result.success
-        and connection_result.speakers
-        ) %}
-        <section class="card">
-            <h2>話者・スタイル選択</h2>
+            <dl class="settings-list" style="margin-top: 20px;">
+                <div class="settings-row">
+                    <dt>トークンファイル</dt>
 
-            <form method="post" action="{{ url_for('save_voice_profile') }}">
-                <div class="form-grid">
-
-                    <div class="form-group">
-                        <label class="form-label" for="profile-select">
-                            設定対象
-                        </label>
-
-                        <select class="form-select" id="profile-select" name="profile_name">
-                            {% for profile_name, label in voice_profile_names.items() %}
-                            <option value="{{ profile_name }}">
-                                {{ label }}
-                            </option>
-                            {% endfor %}
-                        </select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="speaker-select">
-                            話者
-                        </label>
-
-                        <select class="form-select" id="speaker-select"></select>
-                    </div>
-
-                    <div class="form-group">
-                        <label class="form-label" for="style-select">
-                            スタイル
-                        </label>
-
-                        <select class="form-select" id="style-select" name="style_id" required></select>
-                    </div>
-
+                    <dd>
+                        {% if twitch_auth_status.token_exists %}
+                        存在します
+                        {% else %}
+                        存在しません
+                        {% endif %}
+                    </dd>
                 </div>
 
-                <div class="selection-result">
-                    <p>
-                        選択中の話者：
-                        <strong id="selected-speaker-name">
-                            -
-                        </strong>
-                    </p>
+                <div class="settings-row">
+                    <dt>トークン保存先</dt>
 
-                    <p>
-                        選択中のスタイル：
-                        <strong id="selected-style-name">
-                            -
-                        </strong>
-                    </p>
-
-                    <p>
-                        スタイルID：
-                        <span class="code-value" id="selected-style-id">
-                            -
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.token_path }}
                         </span>
-                    </p>
+                    </dd>
+                </div>
 
-                    <div class="form-grid" style="margin-top: 20px;">
-                        <div class="range-group">
-                            <div class="range-header">
-                                <label class="form-label" for="speed-range">
-                                    話速
-                                </label>
+                {% if twitch_auth_status.display_name %}
+                <div class="settings-row">
+                    <dt>ログインユーザー</dt>
 
-                                <span class="range-value" id="speed-value">
-                                    1.00
-                                </span>
-                            </div>
+                    <dd>
+                        {{ twitch_auth_status.display_name }}
 
-                            <input class="form-range" id="speed-range" name="speed" type="range" min="0.5" max="2.0"
-                                step="0.05" value="1.0">
-
-                            <div class="range-scale">
-                                <span>遅い 0.50</span>
-                                <span>標準 1.00</span>
-                                <span>速い 2.00</span>
-                            </div>
-                        </div>
-
-                        <div class="range-group">
-                            <div class="range-header">
-                                <label class="form-label" for="pitch-range">
-                                    音高
-                                </label>
-
-                                <span class="range-value" id="pitch-value">
-                                    0.00
-                                </span>
-                            </div>
-
-                            <input class="form-range" id="pitch-range" name="pitch" type="range" min="-0.15" max="0.15"
-                                step="0.01" value="0.0">
-
-                            <div class="range-scale">
-                                <span>低い -0.15</span>
-                                <span>標準 0.00</span>
-                                <span>高い 0.15</span>
-                            </div>
-                        </div>
-
-                        <div class="range-group">
-                            <div class="range-header">
-                                <label class="form-label" for="volume-range">
-                                    音量
-                                </label>
-
-                                <span class="range-value" id="volume-value">
-                                    1.00
-                                </span>
-                            </div>
-
-                            <input class="form-range" id="volume-range" name="volume" type="range" min="0.0" max="2.0"
-                                step="0.05" value="1.0">
-
-                            <div class="range-scale">
-                                <span>無音 0.00</span>
-                                <span>標準 1.00</span>
-                                <span>大きい 2.00</span>
-                            </div>
-                        </div>
-                    </div>
-
-                    <div class="form-group">
-                        <label style="
-                                display: flex;
-                                align-items: center;
-                                gap: 10px;
-                                cursor: pointer;
-                            ">
-                            <input id="enabled-checkbox" name="enabled" type="checkbox" checked>
-
-                            <span class="form-label">
-                                この音声プロフィールを有効にする
-                            </span>
-                        </label>
-                    </div>
-
-                    <div class="form-group" style="margin-top: 20px;">
-                        <label class="form-label" for="test-text">
-                            テスト文章
-                        </label>
-
-                        <textarea class="form-textarea" id="test-text"
-                            maxlength="200">AivisVoiceBridgeのテスト読み上げです。</textarea>
-
-                        <span class="notice" style="margin-top: 0;">
-                            200文字以内
+                        {% if twitch_auth_status.login %}
+                        <span class="code-value">
+                            {{ twitch_auth_status.login }}
                         </span>
-                    </div>
+                        {% endif %}
+                    </dd>
+                </div>
+                {% endif %}
 
-                    <div class="button-row">
-                        <button class="button button-test" id="test-speech-button" type="button">
-                            選択中の声でテスト
-                        </button>
+                {% if twitch_auth_status.user_id %}
+                <div class="settings-row">
+                    <dt>ユーザーID</dt>
 
-                        <button class="button button-save" type="submit">
-                            選択中の役割へ保存
-                        </button>
-                    </div>
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.user_id }}
+                        </span>
+                    </dd>
+                </div>
+                {% endif %}
 
-                    <div class="status test-status" id="test-status">
-                        <span class="status-indicator"></span>
+                {% if twitch_auth_status.checked_at %}
+                <div class="settings-row">
+                    <dt>最終認証確認</dt>
 
-                        <div class="status-content">
-                            <p class="status-text" id="test-status-message"></p>
-                        </div>
-                    </div>
+                    <dd>
+                        <span class="code-value">
+                            {{ twitch_auth_status.checked_at }}
+                        </span>
+                    </dd>
+                </div>
+                {% endif %}
+            </dl>
 
-                    <audio class="audio-player" id="test-audio" controls></audio>
-
+            <form class="button-row" method="post" action="{{ url_for('prepare_twitch_reauth') }}" onsubmit="
+        return confirm(
+          '現在のトークンを退避して、'
+          + '次回起動時に再認証します。よろしいですか？'
+        );
+      ">
+                <button class="button" type="submit">
+                    再認証の準備をする
+                </button>
             </form>
 
             <p class="notice">
-                選択した役割の
-                話者・スタイル・話速・音高・音量・有効状態を
-                <span class="code-value">
-                    voices
-                </span>
-                内の対応する設定へ保存します。
-                AivisVoiceBridge本体への反映には再起動が必要です。
+                再認証するときはAivisVoiceBridge本体を停止してから
+                このボタンを押し、その後本体を再起動してください。
+                トークン本体やClient Secretはこの画面に表示しません。
             </p>
         </section>
+        {% endif %}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
         <script>
-            const speakers =
-                {{ connection_result.speakers | tojson }};
+            let speakers = [];
 
             const voiceProfiles =
                 {{ voice_profiles | tojson }};
 
             const profileSelect =
                 document.getElementById("profile-select");
+
+            const profileBackendSelect =
+                document.getElementById(
+                    "profile-backend-select"
+                );
 
             const enabledCheckbox =
                 document.getElementById("enabled-checkbox");
@@ -1644,12 +1691,84 @@
                 }
             }
 
-            function loadSelectedVoiceProfile() {
+            async function loadSpeakersForBackend(
+                backend,
+                preferredStyleId = null
+            ) {
+                speakerSelect.disabled = true;
+                styleSelect.disabled = true;
+
+                speakerSelect.innerHTML = "";
+                styleSelect.innerHTML = "";
+
+                selectedSpeakerName.textContent = "-";
+                selectedStyleName.textContent = "-";
+                selectedStyleId.textContent = "-";
+
+                try {
+                    const response = await fetch(
+                        `/api/engine-speakers/${encodeURIComponent(
+                            backend
+                        )}`
+                    );
+
+                    const result = await response.json();
+
+                    if (!response.ok || !result.success) {
+                        throw new Error(
+                            result.message
+                            || "話者一覧を取得できませんでした。"
+                        );
+                    }
+
+                    speakers = Array.isArray(
+                        result.speakers
+                    )
+                        ? result.speakers
+                        : [];
+
+                    if (speakers.length === 0) {
+                        throw new Error(
+                            "利用可能な話者がありません。"
+                        );
+                    }
+
+                    speakerSelect.disabled = false;
+
+                    fillSpeakerSelect(
+                        preferredStyleId
+                    );
+
+                    fillStyleSelect(
+                        preferredStyleId
+                    );
+
+                    showTestStatus(
+                        true,
+                        result.message
+                    );
+
+                } catch (error) {
+                    speakers = [];
+
+                    showTestStatus(
+                        false,
+                        error.message
+                        || "話者一覧を取得できませんでした。"
+                    );
+                }
+            }
+
+
+            async function loadSelectedVoiceProfile() {
                 const profile =
                     getSelectedVoiceProfile();
 
-                fillSpeakerSelect(profile.speaker);
-                fillStyleSelect(profile.speaker);
+                const backend =
+                    profile.backend || "aivis";
+
+                profileBackendSelect.value =
+                    backend;
 
                 speedRange.value =
                     String(profile.speed ?? 1.0);
@@ -1664,6 +1783,11 @@
                     profile.enabled !== false;
 
                 updateVoiceParameterValues();
+
+                await loadSpeakersForBackend(
+                    backend,
+                    profile.speaker
+                );
             }
 
             function updateVoiceParameterValues() {
@@ -1727,6 +1851,7 @@
                             },
 
                             body: JSON.stringify({
+                                backend: profileBackendSelect.value,
                                 text: text,
                                 style_id: styleId,
                                 speed: Number(speedRange.value),
@@ -1824,18 +1949,50 @@
                 updateVoiceParameterValues
             );
 
-            profileSelect.addEventListener(
+            profileBackendSelect.addEventListener(
                 "change",
-                loadSelectedVoiceProfile
+                async () => {
+                    clearTestAudio();
+
+                    await loadSpeakersForBackend(
+                        profileBackendSelect.value
+                    );
+                }
             );
 
-            loadSelectedVoiceProfile();
+            profileSelect.addEventListener(
+                "change",
+                () => {
+                    clearTestAudio();
+
+                    loadSelectedVoiceProfile().catch(
+                        (error) => {
+                            showTestStatus(
+                                false,
+                                error.message
+                                || "音声設定を読み込めませんでした。"
+                            );
+                        }
+                    );
+                }
+            );
+
+            loadSelectedVoiceProfile().catch(
+                (error) => {
+                    showTestStatus(
+                        false,
+                        error.message
+                        || "音声設定を読み込めませんでした。"
+                    );
+                }
+            );
 
             function getSelectedVoiceProfile() {
                 const profileName =
                     profileSelect.value;
 
                 return voiceProfiles[profileName] ?? {
+                    backend: "aivis",
                     speaker: null,
                     speed: 1.0,
                     pitch: 0.0,

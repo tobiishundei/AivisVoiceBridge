@@ -329,6 +329,62 @@ def get_engine_information(
     }
 
 
+def get_engine_information_by_backend(
+    config: dict[str, Any],
+    backend: str,
+) -> dict[str, Any]:
+    """
+    指定されたbackendの接続情報を取得する。
+    """
+    backend = str(backend).strip().lower()
+
+    if backend not in TTS_BACKEND_NAMES:
+        raise ValueError(
+            "音声エンジンが正しくありません。"
+        )
+
+    engine_config = config.get(
+        backend,
+        {},
+    )
+
+    if not isinstance(engine_config, dict):
+        engine_config = {}
+
+    host = str(
+        engine_config.get(
+            "host",
+            "127.0.0.1",
+        )
+    ).strip()
+
+    default_port = DEFAULT_ENGINE_PORTS[
+        backend
+    ]
+
+    try:
+        port = int(
+            engine_config.get(
+                "port",
+                default_port,
+            )
+        )
+
+    except (TypeError, ValueError):
+        port = default_port
+
+    if not 1 <= port <= 65535:
+        port = default_port
+
+    return {
+        "backend": backend,
+        "engine_name": TTS_BACKEND_NAMES[backend],
+        "host": host,
+        "port": port,
+        "base_url": f"http://{host}:{port}",
+    }
+
+
 def get_voice_settings(
     config: dict[str, Any],
     profile_name: str,
@@ -338,6 +394,15 @@ def get_voice_settings(
     現在の音声設定を取得する。
     """
     settings = {
+        "backend": str(
+            config.get(
+                "tts",
+                {},
+            ).get(
+                "backend",
+                "aivis",
+            )
+        ),
         "speaker": None,
         "speed": 1.0,
         "pitch": 0.0,
@@ -357,6 +422,16 @@ def get_voice_settings(
 
     if not isinstance(voice_profile, dict):
         return settings
+
+    backend = str(
+        voice_profile.get(
+            "backend",
+            settings["backend"],
+        )
+    ).strip().lower()
+
+    if backend in TTS_BACKEND_NAMES:
+        settings["backend"] = backend
 
     speaker_id = voice_profile.get("speaker")
 
@@ -784,6 +859,7 @@ def get_all_voice_profiles(
 def update_voice_profile(
     config: dict[str, Any],
     profile_name: str,
+    backend: str,
     speaker_id: int,
     speed: float,
     pitch: float,
@@ -798,6 +874,11 @@ def update_voice_profile(
             "保存対象の音声プロフィールが正しくありません。"
         )
 
+    if backend not in TTS_BACKEND_NAMES:
+        raise ValueError(
+            "音声エンジンが正しくありません。"
+        )
+
     voices = config.get("voices")
 
     if not isinstance(voices, dict):
@@ -810,6 +891,7 @@ def update_voice_profile(
         voice_profile = {}
         voices[profile_name] = voice_profile
 
+    voice_profile["backend"] = backend
     voice_profile["speaker"] = speaker_id
     voice_profile["speed"] = speed
     voice_profile["pitch"] = pitch
@@ -1657,6 +1739,51 @@ def check_engine():
     )
 
 
+@app.get("/api/engine-speakers/<backend>")
+def api_engine_speakers(
+    backend: str,
+):
+    """
+    指定されたTTSエンジンへ接続し、
+    話者・スタイル一覧を返す。
+    """
+    try:
+        config = load_config()
+
+        engine = (
+            get_engine_information_by_backend(
+                config,
+                backend,
+            )
+        )
+
+        result = (
+            check_engine_and_get_speakers(
+                engine
+            )
+        )
+
+        status_code = (
+            200
+            if result["success"]
+            else 502
+        )
+
+        return jsonify(result), status_code
+
+    except (
+        FileNotFoundError,
+        ValueError,
+        OSError,
+    ) as error:
+        return jsonify({
+            "success": False,
+            "message": str(error),
+            "version": None,
+            "speakers": [],
+        }), 400
+
+
 @app.post("/save-voice-profile")
 def save_voice_profile():
     """
@@ -1674,6 +1801,21 @@ def save_voice_profile():
                 "message": (
                     "保存対象の音声プロフィールが"
                     "正しくありません。"
+                ),
+            }
+        )
+
+    backend = request.form.get(
+        "profile_backend",
+        "",
+    ).strip().lower()
+
+    if backend not in TTS_BACKEND_NAMES:
+        return render_index(
+            save_result={
+                "success": False,
+                "message": (
+                    "音声エンジンが正しくありません。"
                 ),
             }
         )
@@ -1760,7 +1902,12 @@ def save_voice_profile():
 
     try:
         config = load_config()
-        engine = get_engine_information(config)
+        engine = (
+            get_engine_information_by_backend(
+                config,
+                backend,
+            )
+        )
 
         connection_result = (
             check_engine_and_get_speakers(engine)
@@ -1800,6 +1947,7 @@ def save_voice_profile():
         update_voice_profile(
             config=config,
             profile_name=profile_name,
+            backend=backend,
             speaker_id=style_id,
             speed=speed,
             pitch=pitch,
@@ -1821,13 +1969,18 @@ def save_voice_profile():
             profile_name
         ]
 
+        engine_label = TTS_BACKEND_NAMES[
+            backend
+        ]
+
         return render_index(
             connection_result=connection_result,
             save_result={
                 "success": True,
                 "message": (
                     f"「{profile_label}」の音声設定を"
-                    f"「{speaker_name} / {style_name}」"
+                    f"「{engine_label} / "
+                    f"{speaker_name} / {style_name}」"
                     f"へ変更しました。"
                     f" 話速: {speed:.2f}、"
                     f"音高: {pitch:.2f}、"
@@ -2208,6 +2361,21 @@ def test_speech():
             "message": "リクエスト形式が正しくありません。",
         }), 400
 
+    backend = str(
+        request_data.get(
+            "backend",
+            "",
+        )
+    ).strip().lower()
+
+    if backend not in TTS_BACKEND_NAMES:
+        return jsonify({
+            "success": False,
+            "message": (
+                "音声エンジンが正しくありません。"
+            ),
+        }), 400
+
     text = str(
         request_data.get("text", "")
     ).strip()
@@ -2296,7 +2464,12 @@ def test_speech():
 
     try:
         config = load_config()
-        engine = get_engine_information(config)
+        engine = (
+            get_engine_information_by_backend(
+                config,
+                backend,
+            )
+        )
 
         base_url = engine.get(
             "base_url",

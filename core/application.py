@@ -13,7 +13,7 @@ from services.speech_policy import SpeechPolicy
 from services.voice_profile_manager import VoiceProfileManager
 from speech.queue import SpeechQueue
 from speech.worker import SpeechWorker
-from tts.factory import create_tts_engine
+from tts.factory import create_tts_engine_manager
 from twitch.twitch_client import TwitchClient
 
 
@@ -31,7 +31,7 @@ class Application:
         self.policy = SpeechPolicy(config.speech)
         self.queue = SpeechQueue()
 
-        self.tts = self._create_tts_engine()
+        self.tts = self._create_tts_manager()
         self.audio = self._create_audio_engine()
 
         self.worker = SpeechWorker(
@@ -62,12 +62,13 @@ class Application:
 
         return dictionary
 
-    def _create_tts_engine(self):
+    def _create_tts_manager(self):
         """
-        設定に応じた TTS エンジンを生成する。
+        音声プロファイルで使用する
+        TTSエンジン群を生成する。
         """
 
-        return create_tts_engine(
+        return create_tts_engine_manager(
             self.config
         )
 

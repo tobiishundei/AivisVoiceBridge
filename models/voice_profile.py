@@ -1,8 +1,11 @@
 """
 読み上げ音声のプロファイルモデル。
 
-ユーザー種別ごとに、使用する話者IDや音声パラメータを切り替えるために使う。
-AivisSpeech / VOICEVOX 系エンジンでは speaker が話者・スタイルIDに対応する。
+ユーザー種別ごとに、使用するTTSエンジン、話者ID、
+音声パラメータを切り替えるために使う。
+
+AivisSpeech / VOICEVOX系エンジンでは、
+speakerが話者・スタイルIDに対応する。
 """
 
 from dataclasses import dataclass
@@ -18,6 +21,11 @@ class VoiceProfile:
     # Profile name
     #
     name: str
+
+    #
+    # TTS engine backend
+    #
+    backend: str = "aivis"
 
     #
     # TTS engine speaker/style ID

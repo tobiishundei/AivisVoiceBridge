@@ -1,3 +1,4 @@
+cat > settings/config.json.example <<'EOF'
 {
   "client_id": "YOUR_TWITCH_CLIENT_ID",
   "client_secret": "YOUR_TWITCH_CLIENT_SECRET",
@@ -46,6 +47,7 @@
 
   "voices": {
     "default": {
+      "backend": "aivis",
       "speaker": 888753760,
       "speed": 1.0,
       "pitch": 0.0,
@@ -54,6 +56,7 @@
     },
 
     "broadcaster": {
+      "backend": "aivis",
       "speaker": 888753760,
       "speed": 1.0,
       "pitch": 0.0,
@@ -62,6 +65,7 @@
     },
 
     "moderator": {
+      "backend": "aivis",
       "speaker": 888753760,
       "speed": 1.0,
       "pitch": 0.0,
@@ -70,6 +74,7 @@
     },
 
     "vip": {
+      "backend": "aivis",
       "speaker": 888753760,
       "speed": 1.0,
       "pitch": 0.0,
@@ -78,6 +83,7 @@
     },
 
     "subscriber": {
+      "backend": "aivis",
       "speaker": 888753760,
       "speed": 1.0,
       "pitch": 0.0,
@@ -86,3 +92,4 @@
     }
   }
 }
+EOF
