@@ -3,6 +3,7 @@
 """
 
 from audio.ffplay_output import FFplayOutput
+from audio.persistent_output import PersistentAudioOutput
 from audio.pipewire_output import PipeWireOutput
 
 
@@ -23,6 +24,12 @@ def create_audio_output(config, logger=None):
 
     if backend == "ffplay":
         return FFplayOutput(
+            logger=logger,
+        )
+
+    if backend == "persistent":
+        return PersistentAudioOutput(
+            app_name=audio.app_name,
             logger=logger,
         )
 
