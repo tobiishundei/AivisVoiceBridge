@@ -1,50 +1,38 @@
-cat > settings/config.json.example <<'EOF'
 {
   "client_id": "YOUR_TWITCH_CLIENT_ID",
   "client_secret": "YOUR_TWITCH_CLIENT_SECRET",
-
   "channel": "YOUR_TWITCH_CHANNEL_NAME",
-
   "redirect_uri": "http://localhost:17563",
-
   "token_file": "tokens/user_token.json",
-
   "scopes": [
     "CHAT_READ",
     "CHAT_EDIT",
     "USER_READ_CHAT",
     "USER_BOT"
   ],
-
   "game_dictionary": "minecraft",
-
   "tts": {
     "backend": "aivis"
   },
-
   "aivis": {
     "host": "127.0.0.1",
     "port": 10101
   },
-
   "voicevox": {
     "host": "127.0.0.1",
     "port": 50021
   },
-
   "speech": {
     "max_length": 120,
     "cooldown": 3.0,
     "skip_url_only": true,
     "skip_empty": true
   },
-
   "audio": {
-    "backend": "pipewire",
+    "backend": "persistent",
     "app_name": "AivisVoiceBridge",
     "media_role": "Communication"
   },
-
   "voices": {
     "default": {
       "backend": "aivis",
@@ -54,7 +42,6 @@ cat > settings/config.json.example <<'EOF'
       "volume": 1.0,
       "enabled": true
     },
-
     "broadcaster": {
       "backend": "aivis",
       "speaker": 888753760,
@@ -63,7 +50,6 @@ cat > settings/config.json.example <<'EOF'
       "volume": 1.0,
       "enabled": true
     },
-
     "moderator": {
       "backend": "aivis",
       "speaker": 888753760,
@@ -72,7 +58,6 @@ cat > settings/config.json.example <<'EOF'
       "volume": 1.0,
       "enabled": true
     },
-
     "vip": {
       "backend": "aivis",
       "speaker": 888753760,
@@ -81,7 +66,6 @@ cat > settings/config.json.example <<'EOF'
       "volume": 1.0,
       "enabled": true
     },
-
     "subscriber": {
       "backend": "aivis",
       "speaker": 888753760,
@@ -92,4 +76,3 @@ cat > settings/config.json.example <<'EOF'
     }
   }
 }
-EOF
